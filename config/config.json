@@ -24,5 +24,8 @@
         "location":"monopoly.db",
         "user":"",
         "password":""
+    },
+    "notifications": {
+        "port":1337
     }
 }

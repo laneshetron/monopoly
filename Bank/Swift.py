@@ -41,7 +41,7 @@ class Swift:
     def __init__(self, client, conv_list):
         self.loop = asyncio.get_event_loop()
         self.host = socket.gethostname()
-        self.port = 4620
+        self.port = g.config['notifications']['port']
         self.h_client = client
         self.h_conv_list = conv_list
         self.db = g.db
