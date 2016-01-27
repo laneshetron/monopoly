@@ -1,0 +1,28 @@
+{
+    "irc": {
+        "enabled":false,
+        "server":"irc.freenode.net",
+        "port":6667,
+        "password":"",
+        "channels": ["#public", "#private"],
+        "silent_channels": ["#foobar"],
+        "whitelist": ["monopoly"],
+        "blacklist": [],
+        "bot": {
+            "nick":"monopoly",
+            "fullname":"Monopoly Karma",
+            "version":"1.0",
+            "password":""
+        }
+    },
+    "hangouts": {
+        "enabled":false,
+        "email":"",
+        "password":""
+    },
+    "db": {
+        "location":"monopoly.db",
+        "user":"",
+        "password":""
+    }
+}
