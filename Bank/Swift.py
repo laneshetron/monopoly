@@ -121,6 +121,10 @@ class Swift:
     # Listen on stdin for irc alerts
     def read_stdin(self):
         message = sys.stdin.readline()
+        if len(message) == 0:
+            print('IRC is kill. Closing read from stdin.')
+            self.loop.remove_reader(sys.stdin)
+            return
         message = message.strip()
         print("Swift received from stdin: ", message)
         sender, channel, *parts = message.split()
