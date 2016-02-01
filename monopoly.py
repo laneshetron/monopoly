@@ -46,7 +46,7 @@ def connect():
         try:
             global ircsock
             g.lastDisconnect = int(time.time())
-            ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ircsock = g.safesocket(socket.AF_INET, socket.SOCK_STREAM)
             ircsock.settimeout(5)
             ircsock.connect((server, port))
             ircsock.settimeout(None)

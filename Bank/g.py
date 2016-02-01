@@ -1,6 +1,14 @@
 import time
 import json
 import sqlite3
+import socket
+
+class safesocket(socket.socket):
+    def send(self, *args):
+        try:
+            super().send(*args)
+        except Exception as e:
+            print('Could not write to socket: ', e)
 
 starttime = int(time.time())
 lastDisconnect = 0
