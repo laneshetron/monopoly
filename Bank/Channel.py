@@ -27,7 +27,7 @@ class Channel:
         self.clients = []
 
         if not self.private:
-            self.socket.send("JOIN {0}\r\n".format(self.channel).encode())
+            self.socket.send("JOIN {0}\r\n".format(self.channel))
 
     def listen(self, msg):
         if msg.find("353") != -1:

@@ -4,9 +4,11 @@ import sqlite3
 import socket
 
 class safesocket(socket.socket):
-    def send(self, *args):
+    def send(self, msg, *args):
         try:
-            super().send(*args)
+            if not isinstance(msg, bytes):
+                msg = msg.encode()
+            super().send(msg, *args)
         except Exception as e:
             print('Could not write to socket: ', e)
 

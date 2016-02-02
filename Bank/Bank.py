@@ -24,11 +24,11 @@ silent_channels = g.silent_channels
 
 def message(msg, chnl):
     if chnl not in silentChannels:
-        ircsock.send("PRIVMSG {0} :{1}\r\n".format(chnl, msg).encode())
+        ircsock.send("PRIVMSG {0} :{1}\r\n".format(chnl, msg))
 
 def action(msg, chnl):
     if chnl not in silentChannels:
-        ircsock.send("PRIVMSG {0} :\x01ACTION {1}\x01\r\n".format(chnl, msg).encode())
+        ircsock.send("PRIVMSG {0} :\x01ACTION {1}\x01\r\n".format(chnl, msg))
 
 def modify(amount, nick, chnl):
     cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))

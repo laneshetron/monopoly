@@ -20,11 +20,11 @@ schema.load_schema(g.db, g.cursor)
 
 def ping(response):
     print("PONG :%s\r\n" % response)
-    ircsock.send("PONG :{0}\r\n".format(response).encode())
+    ircsock.send("PONG :{0}\r\n".format(response))
 
 def version(nick):
     print("NOTICE %s : VERSION monopoly %s\r\n" % (nick, version))
-    ircsock.send("NOTICE {0} : VERSION monopoly {1}\r\n".format(nick, version).encode())
+    ircsock.send("NOTICE {0} : VERSION monopoly {1}\r\n".format(nick, version))
 
 def reset():
     if not Channel.reset():
@@ -51,12 +51,12 @@ def connect():
             ircsock.connect((server, port))
             ircsock.settimeout(None)
             print("PASS %s\r\n" % pswd)
-            ircsock.send(("PASS %s\r\n" % pswd).encode())
+            ircsock.send(("PASS %s\r\n" % pswd))
             print("NICK %s\r\n" % nick)
-            ircsock.send(("NICK %s\r\n" % nick).encode())
+            ircsock.send(("NICK %s\r\n" % nick))
             readbuffer = ""
             ircsock.send("USER {0} {0} {1} :{2}\r\n".format(
-                nick, server, g.config['irc']['bot']['fullname']).encode())
+                nick, server, g.config['irc']['bot']['fullname']))
             g.ircsock = ircsock
             up = True
         except socket.timeout:
@@ -139,4 +139,4 @@ while g.config['irc']['enabled']:
                         reset()
                     else:
                         ircsock.send("PRIVMSG {0} :{1}\r\n".format(chnlName,
-                                     "This command is whitelisted.").encode())
+                                     "This command is whitelisted."))
