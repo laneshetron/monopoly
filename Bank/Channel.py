@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from Bank import Bank, g
 import re
 

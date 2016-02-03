@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from datetime import timedelta
 import time
 import urllib.request
@@ -93,6 +91,7 @@ class Bank:
         self.message("Punished {0}!! >:(  Total: {1}".format(nick, karma))
 
     def karma(self, clients, nick=None, all=False):
+        clients = list(set(clients))
         limit = ""
         print(clients)
         if nick is not None:
@@ -100,7 +99,7 @@ class Bank:
             self.message("Monopoly karma total for {0}:".format(nick))
         elif all:
             # do not set WHERE statement
-            limit = ""
+            limit = " ORDER BY karma DESC LIMIT 10"
             self.message("Global Monopoly karma totals:")
         else:
             if len(clients) > 0:
@@ -110,7 +109,7 @@ class Bank:
                     limit += "nick = '%s'" % uname
                     if uname != clients[-1]:
                         limit += " OR "
-                limit += " ORDER BY karma DESC"
+                limit += " COLLATE NOCASE ORDER BY karma DESC LIMIT 10"
         print("SELECT * FROM monopoly {0}".format(limit))
         self.cursor.execute("SELECT * FROM monopoly {0}".format(limit))
         data = self.cursor.fetchall()
@@ -257,21 +256,21 @@ class Bank:
             self.message("Monopoly has been running for: {0}".format(
                 str(timedelta(seconds=elapsed))))
 
-        if msg.find("!karma") != -1:
-            _nick = ""
-            sub = msg.find("!karma")
-            words = msg[sub:].split()
-            try:
-                _nick = words[1].strip('`~!@#$%^&*()+={}[]\'\":;?/\\|.>,<')
-                _nick = _nick.strip()
-            except:
-                pass
-            if _nick.isalpha():
-                self.karma(clients, _nick)
-            elif _nick == "all":
-                self.karma(clients, None, True)
+        karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", msg, re.IGNORECASE)
+        karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)
+
+        if karma_parens:
+            _nick = ' '.join(karma_parens.group(1).split())
+            karma(clients, _nick)
+        elif karma_underscores and karma_underscores.group(1):
+            _nick = karma_underscores.group(1).replace("_", " ")
+            _nick = ' '.join(_nick.split())
+            if re.search("all", _nick, re.IGNORECASE):
+                karma(clients, all=True)
             else:
-                self.karma(clients)
+                karma(clients, _nick)
+        elif karma_underscores:
+            karma(clients)
 
         if msg.find("jakeism") != -1:
             self.jakeism()

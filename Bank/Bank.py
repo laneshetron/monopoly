@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from datetime import timedelta
 import time
 import random
@@ -179,6 +177,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
         karma(clients, _nick)
     elif karma_underscores and karma_underscores.group(1):
         _nick = karma_underscores.group(1).replace("_", " ").strip()
+        _nick = ' '.join(_nick.split())
         if re.search("all", _nick, re.IGNORECASE):
             karma(clients, all=True)
         else:
