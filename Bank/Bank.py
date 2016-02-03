@@ -69,31 +69,31 @@ def punish(nick):
 
     message("Punished {0}!! >:(  Total: {1}".format(nick, karma), channel)
 
-def karma(chnl, clients, nick=None, all=False):
+def karma(clients, nick=None, all=False):
     clients = list(set(clients))
     limit = ""
     print(clients)
     if nick is not None:
         limit = "WHERE nick = '%s' COLLATE NOCASE LIMIT 1" % nick
-        message("Monopoly karma total for {0}:".format(nick), chnl)
+        message("Monopoly karma total for {0}:".format(nick), channel)
     elif all:
         # do not set WHERE statement
-        limit = ""
-        message("Global Monopoly karma totals:", chnl)
+        limit = " ORDER BY karma DESC LIMIT 10"
+        message("Global Monopoly karma totals:", channel)
     else:
         if len(clients) > 0:
-            message("Monopoly karma totals for {0}:".format(channel), chnl)
+            message("Monopoly karma totals for {0}:".format(channel), channel)
             limit = "WHERE "
             for uname in clients:
                 limit += "nick = '%s'" % uname
                 if uname != clients[-1]:
                     limit += " OR "
-            limit += " ORDER BY karma DESC"
+            limit += " COLLATE NOCASE ORDER BY karma DESC LIMIT 10"
     print("SELECT * FROM monopoly {0}".format(limit))
     cursor.execute("SELECT * FROM monopoly {0}".format(limit))
     data = cursor.fetchall()
     for row in data:
-        message("{0}: {1}".format(row[1], row[2]), chnl)
+        message("{0}: {1}".format(row[1], row[2]), channel)
 
 def parentheses(msg):
     sub = msg.find("(")
@@ -171,22 +171,20 @@ def operands(msg, privmsg, chnl, clients, s_user):
             message("Time since last disconnect: {0}".format(
                 str(timedelta(seconds=disconnect_elapsed))), channel)
 
-    if privmsg.find("!karma") != -1:
-        clients
-        _nick = ""
-        sub = privmsg.find("!karma")
-        words = privmsg[sub:].split()
-        try:
-            _nick = words[1].strip('`~!@#$%^&*()+={}[]\'\":;?/\\|.>,<')
-            _nick = _nick.strip()
-        except:
-            pass
-        if _nick.isalpha():
-            karma(channel, clients, _nick)
-        elif _nick == "all":
-            karma(channel, clients, None, True);
+    karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", privmsg, re.IGNORECASE)
+    karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", privmsg, re.IGNORECASE)
+
+    if karma_parens:
+        _nick = ' '.join(karma_parens.group(1).split())
+        karma(clients, _nick)
+    elif karma_underscores and karma_underscores.group(1):
+        _nick = karma_underscores.group(1).replace("_", " ").strip()
+        if re.search("all", _nick, re.IGNORECASE):
+            karma(clients, all=True)
         else:
-            karma(channel, clients)
+            karma(clients, _nick)
+    elif karma_underscores:
+        karma(clients)
 
     if privmsg.find("jakeism") != -1:
         jakeism(channel)

@@ -4,11 +4,20 @@ import sqlite3
 import socket
 
 class safesocket(socket.socket):
-    def send(self, msg, *args):
+    def __init__(self, *args):
+        self.lastSend = 0
+        super().__init__(*args)
+
+    def send(self, message, *args):
         try:
-            if not isinstance(msg, bytes):
-                msg = msg.encode()
-            super().send(msg, *args)
+            elapsed = int(time.time()) - self.lastSend
+            if not isinstance(message, bytes):
+                message = message.encode()
+            if elapsed < 100:
+                # Sleep between messages to avoid IRC kicking us for flooding
+                time.sleep((100 - elapsed) / 1000)
+            super().send(message, *args)
+            self.lastSend = int(time.time())
         except Exception as e:
             print('Could not write to socket: ', e)
 
