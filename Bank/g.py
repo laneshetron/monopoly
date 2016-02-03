@@ -11,7 +11,7 @@ class safesocket(socket.socket):
 
     def send(self, message, *args):
         try:
-            elapsed = int(time.time()) - self.floodQueue[0]
+            elapsed = int(time.time() * 1000) - self.floodQueue[0]
             if not isinstance(message, bytes):
                 message = message.encode()
             if elapsed / 10 < 100:
@@ -19,7 +19,7 @@ class safesocket(socket.socket):
                 # to avoid IRC kicking us for flooding
                 time.sleep((100 - elapsed / 10) / 1000)
             super().send(message, *args)
-            self.floodQueue.append(int(time.time()))
+            self.floodQueue.append(int(time.time() * 1000))
         except Exception as e:
             print('Could not write to socket: ', e)
 
