@@ -261,16 +261,16 @@ class Bank:
 
         if karma_parens:
             _nick = ' '.join(karma_parens.group(1).split())
-            karma(clients, _nick)
+            self.karma(clients, _nick)
         elif karma_underscores and karma_underscores.group(1):
             _nick = karma_underscores.group(1).replace("_", " ")
             _nick = ' '.join(_nick.split())
             if re.search("all", _nick, re.IGNORECASE):
-                karma(clients, all=True)
+                self.karma(clients, all=True)
             else:
-                karma(clients, _nick)
+                self.karma(clients, _nick)
         elif karma_underscores:
-            karma(clients)
+            self.karma(clients)
 
         if msg.find("jakeism") != -1:
             self.jakeism()
