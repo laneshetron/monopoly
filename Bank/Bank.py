@@ -17,15 +17,14 @@ jakeisms = [
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 channelList = g.channels + g.silent_channels
-silent_channels = g.silent_channels
 
 
 def message(msg, chnl):
-    if chnl not in silentChannels:
+    if chnl not in g.silent_channels:
         ircsock.send("PRIVMSG {0} :{1}\r\n".format(chnl, msg))
 
 def action(msg, chnl):
-    if chnl not in silentChannels:
+    if chnl not in g.silent_channels:
         ircsock.send("PRIVMSG {0} :\x01ACTION {1}\x01\r\n".format(chnl, msg))
 
 def modify(amount, nick, chnl):
