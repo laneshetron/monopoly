@@ -72,7 +72,10 @@ class ChatUI(object):
         self._disable_notifier = True
 
         # TODO Store cookies after authenticating with config
-        cookies = {}
+        try:
+            cookies = hangups.auth.get_auth_stdin(refresh_token_path)
+        except hangups.GoogleAuthError as e:
+            sys.exit('Login failed ({})'.format(e))
 
         self._client = hangups.Client(cookies)
         self._client.on_connect.add_observer(self._on_connect)

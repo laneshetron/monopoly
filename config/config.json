@@ -17,8 +17,7 @@
     },
     "hangouts": {
         "enabled":false,
-        "email":"",
-        "password":""
+        "auth_token":""
     },
     "db": {
         "location":"monopoly.db",

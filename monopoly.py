@@ -79,8 +79,8 @@ if g.config['irc']['enabled']:
 
 if g.config['hangouts']['enabled']:
     print("Starting Hangouts integration.")
-    hangouts = Popen(["python3", "Hangups.py",
-                      "--log", "hangups.log"],
+    hangouts = Popen(["python3", "Hangups.py", "--log", "hangups.log",
+                      "--token-path", "hangouts_token.txt"],
                       stdin=PIPE, bufsize=0, universal_newlines=True)
     swift = hangouts.stdin
 
