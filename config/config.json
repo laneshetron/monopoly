@@ -8,6 +8,7 @@
         "silent_channels": ["#foobar"],
         "whitelist": ["monopoly"],
         "blacklist": [],
+	"fixed": [],
         "bot": {
             "nick":"monopoly",
             "fullname":"Monopoly Karma",
