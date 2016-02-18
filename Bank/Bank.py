@@ -85,7 +85,8 @@ def karma(clients, nick=None, all=False):
                 limit += "nick = '%s'" % uname
                 if uname != clients[-1]:
                     limit += " OR "
-            limit += " COLLATE NOCASE ORDER BY karma DESC LIMIT 10"
+            limit += " COLLATE NOCASE"
+        limit += " ORDER BY karma DESC LIMIT 10"
     print("SELECT * FROM monopoly {0}".format(limit))
     cursor.execute("SELECT * FROM monopoly {0}".format(limit))
     data = cursor.fetchall()
