@@ -71,7 +71,6 @@ class ChatUI(object):
         # Disable UI notifications by default
         self._disable_notifier = True
 
-        # TODO Store cookies after authenticating with config
         try:
             cookies = hangups.auth.get_auth_stdin(refresh_token_path)
         except hangups.GoogleAuthError as e:

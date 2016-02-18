@@ -13,9 +13,12 @@ jakeisms = [
     "It's a slippery slope: one day you're generating api tokens, the next you're torrenting Final Cut Pro.",
     "I've got a little grease lake going here. And I shall name you: Grease Lake!",
     "These German BMW makers are torturing asses.",
-    "*standing at a urinal* Man, these things are heavy... The helmet, I mean." ]
+    "*standing at a urinal* Man, these things are heavy... The helmet, I mean.",
+    "I'm not gonna f\*\*\*\*n Bernie Sanders my lunch at work." ]
+
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
+fixed = g.config['irc']['fixed']
 channelList = g.channels + g.silent_channels
 
 
@@ -129,7 +132,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
             modify(delta, _nick, channel)
         else:
             if _nick.lower() != s_user:
-                if channel in channelList:
+                if channel in channelList and _nick not in fixed:
                     modify(1, _nick, channel)
                 elif channel not in channelList and s_user in whitelist:
                     modify(1, _nick, channel)
@@ -153,7 +156,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                 modify(-1, s_user, channel)
                 message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
             else:
-                if channel in channelList:
+                if channel in channelList and _nick not in fixed:
                     modify(-1, _nick, channel)
                 elif channel not in channelList and s_user in whitelist:
                     modify(-1, _nick, channel)
@@ -174,16 +177,28 @@ def operands(msg, privmsg, chnl, clients, s_user):
 
     if karma_parens:
         _nick = ' '.join(karma_parens.group(1).split())
-        karma(clients, _nick)
+        if s_user not in blacklist:
+            karma(clients, _nick)
+        else:
+            message("Nice try, {0}.".format(s_user), channel)
     elif karma_underscores and karma_underscores.group(1):
         _nick = karma_underscores.group(1).replace("_", " ").strip()
         _nick = ' '.join(_nick.split())
         if re.search("all", _nick, re.IGNORECASE):
-            karma(clients, all=True)
+            if s_user not in blacklist:
+                karma(clients, all=True)
+            else:
+                message("Nice try, {0}.".format(s_user), channel)
         else:
-            karma(clients, _nick)
+            if s_user not in blacklist:
+                karma(clients, _nick)
+            else:
+                message("Nice try, {0}.".format(s_user), channel)
     elif karma_underscores:
-        karma(clients)
+        if s_user not in blacklist:
+            karma(clients)
+        else:
+            message("Nice try, {0}.".format(s_user), channel)
 
     if privmsg.find("jakeism") != -1:
         jakeism(channel)

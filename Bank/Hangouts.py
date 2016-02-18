@@ -15,9 +15,11 @@ jakeisms = [
     "I'm all about the funny",
     "It's a slippery slope: one day you're generating api tokens, the next you're torrenting Final Cut Pro.",
     "I've got a little grease lake going here. And I shall name you: Grease Lake!",
-    "These German BMW makers are torturing asses." ]
-blacklist = [ "HAL" ]
-whitelist = [ "lshetron" ]
+    "These German BMW makers are torturing asses.",
+    "I'm not gonna f\*\*\*\*n Bernie Sanders my lunch at work." ]
+blacklist = g.config['irc']['blacklist']
+whitelist = g.config['irc']['whitelist']
+fixed = g.config['irc']['fixed']
 
 CONVERSATION_TYPE_ONE_TO_ONE = 1
 CONVERSATION_TYPE_GROUP = 2
@@ -167,7 +169,8 @@ class Bank:
                 self.modify(delta, _nick)
             else:
                 if _nick.lower() != sender:
-                    self.modify(1, _nick)
+                    if sender not in blacklist and _nick not in fixed:
+                        self.modify(1, _nick)
                 else:
                     self.punish(sender)
 
@@ -185,6 +188,8 @@ class Bank:
                 if sender in blacklist:
                     self.modify(-1, sender)
                     self.message("You've lost your downvoting privileges, {0}.".format(sender))
+                elif _nick in fixed:
+                    pass
                 else:
                     self.modify(-1, _nick)
 
@@ -262,16 +267,29 @@ class Bank:
 
         if karma_parens:
             _nick = ' '.join(karma_parens.group(1).split())
-            self.karma(clients, _nick)
+            if sender not in blacklist:
+                self.karma(clients, _nick)
+            else:
+                self.message("Nice try, {0}.".format(sender))
+
         elif karma_underscores and karma_underscores.group(1):
             _nick = karma_underscores.group(1).replace("_", " ")
             _nick = ' '.join(_nick.split())
             if re.search("all", _nick, re.IGNORECASE):
-                self.karma(clients, all=True)
+                if sender not in blacklist:
+                    self.karma(clients, all=True)
+                else:
+                    self.message("Nice try, {0}.".format(sender))
             else:
-                self.karma(clients, _nick)
+                if sender not in blacklist:
+                    self.karma(clients, _nick)
+                else:
+                    self.message("Nice try, {0}.".format(sender))
         elif karma_underscores:
-            self.karma(clients)
+            if sender not in blacklist:
+                self.karma(clients)
+            else:
+                self.message("Nice try, {0}.".format(sender))
 
         if msg.find("jakeism") != -1:
             self.jakeism()
