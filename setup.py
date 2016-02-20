@@ -14,6 +14,7 @@ setup(name='monopoly',
       license='MIT',
       packages=['monopoly'],
       install_requires=['hangups'],
+      include_package_data=True,
       zip_safe=False)
 
 # Include setup of custom hangups branch
