@@ -70,12 +70,12 @@ class Channel:
             if parts[1] == ("PART" or "QUIT"):
                 old = parts[0]
                 o_user = old[1:old.find("!")]
-                if o_user.isalpha() and o_user != "monopoly":
+                if o_user.isalpha() and o_user in self.clients and o_user != "monopoly":
                     self.clients.remove(o_user)
                     print("Removed client %s from channel list." % o_user)
 
             if parts[1] == "KICK":
                 kicked_user = parts[3]
-                if kicked_user.isalpha() and kicked_user != "monopoly":
+                if kicked_user.isalpha() and kicked_user in self.clients and kicked_user != "monopoly":
                     self.clients.remove(kicked_user)
                     print("Removed client %s from channel list. (KICKED)" % kicked_user)

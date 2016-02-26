@@ -86,7 +86,7 @@ if g.config['hangouts']['enabled']:
 
 while g.config['irc']['enabled']:
     try:
-        data = ircsock.recv(2048).decode()
+        data = ircsock.recv(2048).decode(errors='replace')
         data = data.strip('\r\n')
     except socket.error as e:
         print("Exception encountered: ", e)

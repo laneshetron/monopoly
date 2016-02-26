@@ -11,15 +11,17 @@ import re
 from hangups import ChatMessageSegment
 from Bank.Hangouts import name_to_nick
 from Bank import g
+import json
 
 def is_an_alert(message):
     result = re.match("^\[(\S+)\] \((\S+)!(\S+)@([0-9a-zA-Z.:-]+)\) (.*)", message)
     if result:
         return result.groups()
 
-def timeout(future, sock, address):
-    if future.cancel():
+def timeout(futures, sock, address):
+    if futures[address].cancel():
         sock.close()
+        #futures.pop(address, None)
         print('Swift: client connection {0} timed out.'.format(address))
 
 class Subscribers(list):
@@ -79,7 +81,7 @@ class Swift:
                 address = ":".join(str(part) for part in address)
                 #futures[address] = asyncio.async(self.read_client(client, address))
                 #timers[address] = asyncio.async(asyncio.sleep(10))
-                #timers[address].add_done_callback(lambda x: timeout(futures[address], client, address))
+                #timers[address].add_done_callback(lambda self, client=client, address=address: timeout(futures, client, address))
                 future = asyncio.async(self.read_client(client, address))
                 print('Swift client connected from: ', address)
             return future
@@ -93,7 +95,7 @@ class Swift:
             while True:
                 data = yield from self.loop.sock_recv(client, 2048)
                 if data:
-                    data = data.decode().strip()
+                    data = data.decode(errors='replace').strip()
                     for message in data.splitlines():
                         print("Swift received from {0}: {1}".format(address, message))
                         alert = is_an_alert(message)
