@@ -14,7 +14,7 @@ jakeisms = [
     "I've got a little grease lake going here. And I shall name you: Grease Lake!",
     "These German BMW makers are torturing asses.",
     "*standing at a urinal* Man, these things are heavy... The helmet, I mean.",
-    "I'm not gonna f\*\*\*\*n Bernie Sanders my lunch at work." ]
+    "I'm not gonna f****n Bernie Sanders my lunch at work." ]
 
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
