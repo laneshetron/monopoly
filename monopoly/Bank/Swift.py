@@ -18,11 +18,15 @@ def is_an_alert(message):
     if result:
         return result.groups()
 
-def timeout(futures, sock, address):
+def timeout(futures, timers, sock, address):
+    # There's no way to properly close the socket while it's being read from
+    # without rewriting all of this using multithreading, unfortunately.
+    # In the rare case that the client never disconnects, I figure at least
+    # not listening to messages is better than nothing.
     if futures[address].cancel():
-        sock.close()
-        #futures.pop(address, None)
         print('Swift: client connection {0} timed out.'.format(address))
+    futures.pop(address, None)
+    timers.pop(address, None)
 
 class Subscribers(list):
 
@@ -79,13 +83,15 @@ class Swift:
             while True:
                 (client, address) = yield from self.loop.sock_accept(sock)
                 address = ":".join(str(part) for part in address)
-                #futures[address] = asyncio.async(self.read_client(client, address))
-                #timers[address] = asyncio.async(asyncio.sleep(10))
-                #timers[address].add_done_callback(lambda self, client=client, address=address: timeout(futures, client, address))
-                future = asyncio.async(self.read_client(client, address))
+                futures[address] = asyncio.async(self.read_client(client, address))
+                timers[address] = asyncio.async(asyncio.sleep(10))
+                timers[address].add_done_callback(lambda self, client=client, address=address:
+                    timeout(futures, timers, client, address))
                 print('Swift client connected from: ', address)
-            return future
+            return futures
         except Exception as e:
+            # ordinarily we would close the socket here, but that can cause mayhem if
+            # we cancelled the future
             print('Swift: ', e)
             raise e
 
