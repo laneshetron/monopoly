@@ -98,9 +98,16 @@ class Swift:
     @asyncio.coroutine
     def read_client(self, client, address):
         try:
+            b_count = 0
             while True:
                 data = yield from self.loop.sock_recv(client, 2048)
                 if data:
+                    b_count += len(data)
+                    if b_count > 10240:
+                        client.close()
+                        print('Swift: Closing client {0}: maximum allowed ' \
+                              'bytes (10KB) received.'.format(address))
+                        break
                     data = data.decode(errors='replace').strip()
                     for message in data.splitlines():
                         print("Swift received from {0}: {1}".format(address, message))
@@ -109,8 +116,8 @@ class Swift:
                             (recipient, nick, uname, domain, msg) = alert
                             for subscriber, conv_id in self.subscribers.nick:
                                 if recipient == subscriber:
-                                    yield from self.notify('Private message from <b>{0}</b>:\n"{1}"'
-                                        .format(nick, msg), conv_id)
+                                    yield from self.notify('Private message from ' \
+                                        '<b>{0}</b>:\n"{1}"'.format(nick, msg), conv_id)
                                     print('Swift forwarded message to {0}.'.format(recipient))
                 else:
                     client.close()
