@@ -20,6 +20,7 @@ blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
 channelList = g.channels + g.silent_channels
+modifications = {}
 
 
 def message(msg, chnl):
@@ -30,27 +31,37 @@ def action(msg, chnl):
     if chnl not in g.silent_channels:
         ircsock.send("PRIVMSG {0} :\x01ACTION {1}\x01\r\n".format(chnl, msg))
 
-def modify(amount, nick, chnl):
-    cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-    data = cursor.fetchall()
-    if len(data) > 0:
-        karma = data[0][2] + amount
-        nick = data[0][1]
-        id = data[0][0]
-        cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                        (karma, id))
-        db.commit()
+def modify(amount, nick):
+    if nick in modifications:
+        modifications[nick] += amount
     else:
-        cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)", (nick, amount))
-        db.commit()
-        karma = amount
+        modifications[nick] = amount
 
-    if amount == 1:
-        message("Gave karma to {0}  Total: {1}".format(nick, karma), chnl)
-    elif amount == -1:
-        message(":( {0}  Total: {1}".format(nick, karma), chnl)
-    else:
-        message("{0} karma to {1}  Total: {2}".format(amount, nick, karma), chnl)
+def modify_messages(chnl):
+    for nick, amount in modifications.items():
+        cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1",
+            (nick,))
+        data = cursor.fetchall()
+        if len(data) > 0:
+            karma = data[0][2] + amount
+            nick = data[0][1]
+            id = data[0][0]
+            cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
+                            (karma, id))
+            db.commit()
+        else:
+            cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
+                (nick, amount))
+            db.commit()
+            karma = amount
+
+        if amount == 1:
+            message("Gave karma to {0}  Total: {1}".format(nick, karma), chnl)
+        elif amount == -1:
+            message(":( {0}  Total: {1}".format(nick, karma), chnl)
+        else:
+            message("{0} karma to {1}  Total: {2}".format(amount, nick, karma), chnl)
+    modifications = {}
 
 def punish(nick):
     cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
@@ -129,13 +140,13 @@ def operands(msg, privmsg, chnl, clients, s_user):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, _nick, channel)
+            modify(delta, _nick)
         else:
             if _nick.lower() != s_user:
                 if channel in channelList and _nick not in fixed:
-                    modify(1, _nick, channel)
+                    modify(1, _nick)
                 elif channel not in channelList and s_user in whitelist:
-                    modify(1, _nick, channel)
+                    modify(1, _nick)
                 else:
                     message("This command is whitelisted for private messages.", channel)
             else:
@@ -150,18 +161,19 @@ def operands(msg, privmsg, chnl, clients, s_user):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, _nick, channel)
+            modify(delta, _nick)
         else:
             if s_user in blacklist:
-                modify(-1, s_user, channel)
+                modify(-1, s_user)
                 message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
             else:
                 if channel in channelList and _nick not in fixed:
-                    modify(-1, _nick, channel)
+                    modify(-1, _nick)
                 elif channel not in channelList and s_user in whitelist:
-                    modify(-1, _nick, channel)
+                    modify(-1, _nick)
                 else:
                     message("This command is whitelisted for private messages.", channel)
+    modify_messages(channel)
 
     if re.search("!uptime", privmsg, re.IGNORECASE):
         running_elapsed = int(time.time()) - g.starttime

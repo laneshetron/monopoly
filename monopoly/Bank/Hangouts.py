@@ -49,34 +49,47 @@ class Bank:
         self.cursor = g.cursor
         self.swift = swift
         self.messageBuffer = []
+        self.modifications = {}
 
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
 
     def modify(self, amount, nick):
-        self.cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-        data = self.cursor.fetchall()
-        if len(data) > 0:
-            karma = data[0][2] + amount
-            nick = data[0][1]
-            id = data[0][0]
-            self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                            (karma, id))
-            self.db.commit()
+        if nick in self.modifications:
+            self.modifications[nick] += amount
         else:
-            self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)", (nick, amount))
-            self.db.commit()
-            karma = amount
+            self.modifications[nick] = amount
 
-        if amount == 1:
-            self.message("Gave karma to {0}  Total: {1}".format(nick, karma))
-        elif amount == -1:
-            self.message(":( {0}  Total: {1}".format(nick, karma))
-        else:
-            self.message("{0} karma to {1}  Total: {2}".format(amount, nick, karma))
+    def modify_messages(self):
+        # TODO: Add change ratelimiting here
+        for nick, amount in self.modifications.items():
+            self.cursor.execute(
+                "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
+            data = self.cursor.fetchall()
+            if len(data) > 0:
+                karma = data[0][2] + amount
+                nick = data[0][1]
+                id = data[0][0]
+                self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
+                                (karma, id))
+                self.db.commit()
+            else:
+                self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
+                    (nick, amount))
+                self.db.commit()
+                karma = amount
+
+            if amount == 1:
+                self.message("Gave karma to {0}  Total: {1}".format(nick, karma))
+            elif amount == -1:
+                self.message(":( {0}  Total: {1}".format(nick, karma))
+            else:
+                self.message("{0} karma to {1}  Total: {2}".format(amount, nick, karma))
+        self.modifications = {}
 
     def punish(self, nick):
-        self.cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
+        self.cursor.execute(
+            "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
         data = self.cursor.fetchall()
         if len(data) > 0:
             karma = data[0][2] - 3
@@ -297,6 +310,7 @@ class Bank:
         self.send(self.flush(), conv)
 
     def flush(self):
+        self.modify_messages()
         buffer = self.messageBuffer
         self.messageBuffer = []
         return buffer
