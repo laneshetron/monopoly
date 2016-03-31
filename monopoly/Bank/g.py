@@ -10,12 +10,26 @@ class ratelimit:
         self.duration = duration # in milliseconds
         self.rateQueue = deque([0] * max, maxlen=max)
 
-    def queue(self, job):
-        elapsed = int(time.time() * 1000) - self.rateQueue[0]
-        if elapsed / self.max < self.duration:
-            time.sleep((self.duration - elapsed / self.max) / 1000)
+    def queue(self):
+        if self.overflow:
+            time.sleep((self.duration - self.elapsed / self.max) / 1000)
         self.rateQueue.append(int(time.time() * 1000))
         # TODO need to adapt this for the event loop so we can yield on delays
+
+    def nonblocking_queue(self):
+        if self.overflow:
+            return False
+        else:
+            self.rateQueue.append(int(time.time() * 1000))
+            return True
+
+    @property
+    def elapsed(self):
+        return int(time.time() * 1000) - self.rateQueue[0]
+
+    @property
+    def overflow(self):
+        return self.elapsed / self.max < self.duration
 
 class safesocket(socket.socket):
     def __init__(self, *args):
