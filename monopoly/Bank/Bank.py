@@ -147,7 +147,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     modify(1, _nick)
                 elif channel not in channelList and s_user in whitelist:
                     modify(1, _nick)
-                else:
+                elif channel not in channelList:
                     message("This command is whitelisted for private messages.", channel)
             else:
                 punish(s_user)
@@ -171,7 +171,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     modify(-1, _nick)
                 elif channel not in channelList and s_user in whitelist:
                     modify(-1, _nick)
-                else:
+                elif channel not in channelList:
                     message("This command is whitelisted for private messages.", channel)
     modify_messages(channel)
 
