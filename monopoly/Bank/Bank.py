@@ -38,6 +38,7 @@ def modify(amount, nick):
         modifications[nick] = amount
 
 def modify_messages(chnl):
+    global modifications
     for nick, amount in modifications.items():
         cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1",
             (nick,))
