@@ -4,22 +4,32 @@ import sqlite3
 import socket
 from collections import deque
 
+class ratelimit:
+    def __init__(self, max, duration):
+        self.max = max
+        self.duration = duration # in milliseconds
+        self.rateQueue = deque([0] * max, maxlen=max)
+
+    def queue(self, job):
+        elapsed = int(time.time() * 1000) - self.rateQueue[0]
+        if elapsed / self.max < self.duration:
+            time.sleep((self.duration - elapsed / self.max) / 1000)
+        self.rateQueue.append(int(time.time() * 1000))
+        # TODO need to adapt this for the event loop so we can yield on delays
+
 class safesocket(socket.socket):
     def __init__(self, *args):
-        self.floodQueue = deque([0] * 10, maxlen=10)
+        self.floodQueue = ratelimit(10, 100)
         super().__init__(*args)
 
     def send(self, message, *args):
         try:
-            elapsed = int(time.time() * 1000) - self.floodQueue[0]
             if not isinstance(message, bytes):
                 message = message.encode()
-            if elapsed / 10 < 100:
-                # Start rate limiting after 10 messages within 100ms
-                # to avoid IRC kicking us for flooding
-                time.sleep((100 - elapsed / 10) / 1000)
+            # Start rate limiting after 10 messages within 100ms
+            # to avoid IRC kicking us for flooding
+            self.floodQueue.queue()
             super().send(message, *args)
-            self.floodQueue.append(int(time.time() * 1000))
         except Exception as e:
             print('Could not write to socket: ', e)
 
