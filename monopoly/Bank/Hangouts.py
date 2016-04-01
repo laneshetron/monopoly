@@ -51,6 +51,8 @@ class Bank:
         self.messageBuffer = []
         self.modifications = {}
         self.g_ratelimiter = g.global_ratelimiter()
+        self.r_ratelimiter = g.global_ratelimiter(max=15)
+        self.sr_ratelimiter = g.global_ratelimiter(max=6)
 
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
@@ -184,7 +186,9 @@ class Bank:
             else:
                 if _nick.lower() != sender:
                     if sender not in blacklist and _nick not in fixed:
-                        if self.g_ratelimiter.queue(sender):
+                        if (self.g_ratelimiter.queue(sender)
+                            and self.r_ratelimiter.queue(_nick)
+                            and self.sr_ratelimiter.queue(sender + _nick)):
                             self.modify(1, _nick)
                 else:
                     self.punish(sender)
@@ -200,7 +204,9 @@ class Bank:
             if delta is not None and sender in whitelist:
                 self.modify(delta, _nick)
             else:
-                if self.g_ratelimiter.queue(sender):
+                if (self.g_ratelimiter.queue(sender)
+                    and self.r_ratelimiter.queue(_nick)
+                    and self.sr_ratelimiter.queue(sender + nick)):
                     if sender in blacklist:
                         self.modify(-1, sender)
                         self.message("You've lost your downvoting privileges, {0}."

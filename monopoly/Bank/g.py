@@ -37,10 +37,10 @@ class global_ratelimiter:
         self.duration = duration
         self.ratelimits = { 'global': ratelimit(self.max * 2, self.duration) }
 
-    def queue(self, sender):
-        if sender not in self.ratelimits:
-            self.ratelimits[sender] = ratelimit(self.max, self.duration)
-        return self.ratelimits[sender].nonblocking_queue()
+    def queue(self, key):
+        if key not in self.ratelimits:
+            self.ratelimits[key] = ratelimit(self.max, self.duration)
+        return self.ratelimits[key].nonblocking_queue()
 
 class safesocket(socket.socket):
     def __init__(self, *args):
