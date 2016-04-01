@@ -50,6 +50,7 @@ class Bank:
         self.swift = swift
         self.messageBuffer = []
         self.modifications = {}
+        self.g_ratelimiter = g.global_ratelimiter()
 
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
@@ -183,7 +184,8 @@ class Bank:
             else:
                 if _nick.lower() != sender:
                     if sender not in blacklist and _nick not in fixed:
-                        self.modify(1, _nick)
+                        if self.g_ratelimiter.queue(sender):
+                            self.modify(1, _nick)
                 else:
                     self.punish(sender)
 
@@ -198,13 +200,15 @@ class Bank:
             if delta is not None and sender in whitelist:
                 self.modify(delta, _nick)
             else:
-                if sender in blacklist:
-                    self.modify(-1, sender)
-                    self.message("You've lost your downvoting privileges, {0}.".format(sender))
-                elif _nick in fixed:
-                    pass
-                else:
-                    self.modify(-1, _nick)
+                if self.g_ratelimiter.queue(sender):
+                    if sender in blacklist:
+                        self.modify(-1, sender)
+                        self.message("You've lost your downvoting privileges, {0}."
+                            .format(sender))
+                    elif _nick in fixed:
+                        pass
+                    else:
+                        self.modify(-1, _nick)
 
         imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.-]+)(.jpg|.png|.jpeg|.gif)\/?)", msg)
         for link in imageLinks:
@@ -271,41 +275,46 @@ class Bank:
 
         # TODO need shared health monitoring between hangouts and IRC
         if re.search("!uptime", msg, re.IGNORECASE):
-            elapsed = int(time.time()) - g.starttime
-            self.message("Monopoly has been running for: {0}".format(
-                str(timedelta(seconds=elapsed))))
+            if self.g_ratelimiter.queue(sender):
+                elapsed = int(time.time()) - g.starttime
+                self.message("Monopoly has been running for: {0}".format(
+                    str(timedelta(seconds=elapsed))))
 
         karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", msg, re.IGNORECASE)
         karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)
 
         if karma_parens:
-            _nick = ' '.join(karma_parens.group(1).split())
-            if sender not in blacklist:
-                self.karma(clients, _nick)
-            else:
-                self.message("Nice try, {0}.".format(sender))
-
-        elif karma_underscores and karma_underscores.group(1):
-            _nick = karma_underscores.group(1).replace("_", " ")
-            _nick = ' '.join(_nick.split())
-            if re.search("all", _nick, re.IGNORECASE):
-                if sender not in blacklist:
-                    self.karma(clients, all=True)
-                else:
-                    self.message("Nice try, {0}.".format(sender))
-            else:
+            if self.g_ratelimiter.queue(sender):
+                _nick = ' '.join(karma_parens.group(1).split())
                 if sender not in blacklist:
                     self.karma(clients, _nick)
                 else:
                     self.message("Nice try, {0}.".format(sender))
+
+        elif karma_underscores and karma_underscores.group(1):
+            if self.g_ratelimiter.queue(sender):
+                _nick = karma_underscores.group(1).replace("_", " ")
+                _nick = ' '.join(_nick.split())
+                if re.search("all", _nick, re.IGNORECASE):
+                    if sender not in blacklist:
+                        self.karma(clients, all=True)
+                    else:
+                        self.message("Nice try, {0}.".format(sender))
+                else:
+                    if sender not in blacklist:
+                        self.karma(clients, _nick)
+                    else:
+                        self.message("Nice try, {0}.".format(sender))
         elif karma_underscores:
-            if sender not in blacklist:
-                self.karma(clients)
-            else:
-                self.message("Nice try, {0}.".format(sender))
+            if self.g_ratelimiter.queue(sender):
+                if sender not in blacklist:
+                    self.karma(clients)
+                else:
+                    self.message("Nice try, {0}.".format(sender))
 
         if msg.find("jakeism") != -1:
-            self.jakeism()
+            if self.g_ratelimiter.queue(sender):
+                self.jakeism()
 
         self.send(self.flush(), conv)
 

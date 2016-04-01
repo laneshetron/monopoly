@@ -31,6 +31,17 @@ class ratelimit:
     def overflow(self):
         return self.elapsed / self.max < self.duration
 
+class global_ratelimiter:
+    def __init__(self, max=20, duration=3600 * 1000):
+        self.max = max
+        self.duration = duration
+        self.ratelimits = { 'global': ratelimit(self.max * 2, self.duration) }
+
+    def queue(self, sender):
+        if sender not in self.ratelimits:
+            self.ratelimits[sender] = ratelimit(self.max, self.duration)
+        return self.ratelimits[sender].nonblocking_queue()
+
 class safesocket(socket.socket):
     def __init__(self, *args):
         self.floodQueue = ratelimit(10, 100)
