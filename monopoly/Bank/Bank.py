@@ -21,6 +21,9 @@ whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
 channelList = g.channels + g.silent_channels
 modifications = {}
+g_ratelimiter = g.global_ratelimiter()
+r_ratelimiter = g.global_ratelimiter(max=15)
+sr_ratelimiter = g.global_ratelimiter(max=6)
 
 
 def message(msg, chnl):
@@ -63,6 +66,15 @@ def modify_messages(chnl):
         else:
             message("{0} karma to {1}  Total: {2}".format(amount, nick, karma), chnl)
     modifications = {}
+
+def uptime(chnl):
+    running_elapsed = int(time.time()) - g.starttime
+    disconnect_elapsed = int(time.time()) - g.lastDisconnect
+    message("Monopoly has been running for: {0}".format(
+        str(timedelta(seconds=running_elapsed))), chnl)
+    if running_elapsed != disconnect_elapsed:
+        message("Time since last disconnect: {0}".format(
+            str(timedelta(seconds=disconnect_elapsed))), chnl)
 
 def punish(nick):
     cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
@@ -123,8 +135,9 @@ def jakeism(chnl):
     message(quote, chnl)
 
 def operands(msg, privmsg, chnl, clients, s_user):
-    global channel, ircsock, cursor, db
+    global channel, private, ircsock, cursor, db
     channel = chnl
+    private = channel not in channelList
     ircsock = g.ircsock
     cursor = g.cursor
     db = g.db
@@ -144,14 +157,20 @@ def operands(msg, privmsg, chnl, clients, s_user):
             modify(delta, _nick)
         else:
             if _nick.lower() != s_user:
-                if channel in channelList and _nick not in fixed:
+                if not private and _nick not in fixed:
+                    if (g_ratelimiter.queue(s_user)
+                        and r_ratelimiter.queue(_nick)
+                        and sr_ratelimiter.queue(s_user + _nick)):
+                        modify(1, _nick)
+                elif private and s_user in whitelist:
                     modify(1, _nick)
-                elif channel not in channelList and s_user in whitelist:
-                    modify(1, _nick)
-                elif channel not in channelList:
+                elif private:
                     message("This command is whitelisted for private messages.", channel)
             else:
-                punish(s_user)
+                if (g_ratelimiter.queue(s_user)
+                    and r_ratelimiter.queue(s_user)
+                    and sr_ratelimiter.queue(s_user + s_user)):
+                    punish(s_user)
 
     for group in decrements:
         _nick = group[0].replace("_", " ")
@@ -165,59 +184,64 @@ def operands(msg, privmsg, chnl, clients, s_user):
             modify(delta, _nick)
         else:
             if s_user in blacklist:
-                modify(-1, s_user)
-                message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
+                if (g_ratelimiter.queue(s_user)
+                    and sr_ratelimiter.queue(s_user + s_user)):
+                    modify(-1, s_user)
+                    message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
             else:
-                if channel in channelList and _nick not in fixed:
+                if not private and _nick not in fixed:
+                    if (g_ratelimiter.queue(s_user)
+                        and r_ratelimiter.queue(_nick)
+                        and sr_ratelimiter.queue(s_user + _nick)):
+                        modify(-1, _nick)
+                elif private and s_user in whitelist:
                     modify(-1, _nick)
-                elif channel not in channelList and s_user in whitelist:
-                    modify(-1, _nick)
-                elif channel not in channelList:
+                elif private:
                     message("This command is whitelisted for private messages.", channel)
     modify_messages(channel)
 
     if re.search("!uptime", privmsg, re.IGNORECASE):
-        running_elapsed = int(time.time()) - g.starttime
-        disconnect_elapsed = int(time.time()) - g.lastDisconnect
-        message("Monopoly has been running for: {0}".format(
-            str(timedelta(seconds=running_elapsed))), channel)
-        if running_elapsed != disconnect_elapsed:
-            message("Time since last disconnect: {0}".format(
-                str(timedelta(seconds=disconnect_elapsed))), channel)
+        if g_ratelimiter.queue('global' if private else s_user):
+            uptime(channel)
 
     karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", privmsg, re.IGNORECASE)
     karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", privmsg, re.IGNORECASE)
-
+    # TODO write exceptions for these ratelimits if in whitelist
     if karma_parens:
-        _nick = ' '.join(karma_parens.group(1).split())
-        if s_user not in blacklist:
-            karma(clients, _nick)
-        else:
-            message("Nice try, {0}.".format(s_user), channel)
-    elif karma_underscores and karma_underscores.group(1):
-        _nick = karma_underscores.group(1).replace("_", " ").strip()
-        _nick = ' '.join(_nick.split())
-        if re.search("all", _nick, re.IGNORECASE):
-            if s_user not in blacklist:
-                karma(clients, all=True)
-            else:
-                message("Nice try, {0}.".format(s_user), channel)
-        else:
+        if g_ratelimiter.queue('global' if private else s_user):
+            _nick = ' '.join(karma_parens.group(1).split())
             if s_user not in blacklist:
                 karma(clients, _nick)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
+    elif karma_underscores and karma_underscores.group(1):
+        if g_ratelimiter.queue('global' if private else s_user):
+            _nick = karma_underscores.group(1).replace("_", " ").strip()
+            _nick = ' '.join(_nick.split())
+            if re.search("all", _nick, re.IGNORECASE):
+                if s_user not in blacklist:
+                    karma(clients, all=True)
+                else:
+                    message("Nice try, {0}.".format(s_user), channel)
+            else:
+                if s_user not in blacklist:
+                    karma(clients, _nick)
+                else:
+                    message("Nice try, {0}.".format(s_user), channel)
     elif karma_underscores:
-        if s_user not in blacklist:
-            karma(clients)
-        else:
-            message("Nice try, {0}.".format(s_user), channel)
+        if g_ratelimiter.queue('global' if private else s_user):
+            if s_user not in blacklist:
+                karma(clients)
+            else:
+                message("Nice try, {0}.".format(s_user), channel)
 
     if privmsg.find("jakeism") != -1:
-        jakeism(channel)
+        if g_ratelimiter.queue('global' if private else s_user):
+            jakeism(channel)
 
     if privmsg.find("points") != -1:
-        message("Welcome to {0}, the channel where everything's made up and the points don't matter.".format(channel), channel)
+        if g_ratelimiter.queue('global' if private else s_user):
+            message("Welcome to {0}, the channel where everything's made up and the points don't matter.".format(channel), channel)
 
     if privmsg.find("!chaos") != -1:
        if s_user in whitelist:
@@ -230,4 +254,5 @@ def operands(msg, privmsg, chnl, clients, s_user):
                message(victim + command + " " + str(damage), channel)
            action("Out of ammo...", channel)
        else:
-           message("This command is whitelisted.", channel)
+           if g_ratelimiter.queue('global' if private else s_user):
+               message("This command is whitelisted.", channel)
