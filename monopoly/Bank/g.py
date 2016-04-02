@@ -8,6 +8,7 @@ class ratelimit:
     def __init__(self, max, duration):
         self.max = max
         self.duration = duration # in milliseconds
+        self.dropped_messages = 0
         self.rateQueue = deque([0] * max, maxlen=max)
 
     def queue(self):
@@ -18,8 +19,10 @@ class ratelimit:
 
     def nonblocking_queue(self):
         if self.overflow:
+            self.dropped_messages += 1
             return False
         else:
+            self.dropped_messages = 0
             self.rateQueue.append(int(time.time() * 1000))
             return True
 
@@ -31,16 +34,19 @@ class ratelimit:
     def overflow(self):
         return self.elapsed / self.max < self.duration
 
-class global_ratelimiter:
+class ratelimiter:
     def __init__(self, max=20, duration=3600 * 1000):
         self.max = max
         self.duration = duration
-        self.ratelimits = { 'global': ratelimit(self.max * 2, self.duration) }
+        self.ratelimits = { 'global': ratelimit(self.max, self.duration) }
 
     def queue(self, key):
         if key not in self.ratelimits:
             self.ratelimits[key] = ratelimit(self.max, self.duration)
         return self.ratelimits[key].nonblocking_queue()
+
+    def dropped(self, key):
+        return self.ratelimits[key].dropped_messages
 
 class safesocket(socket.socket):
     def __init__(self, *args):

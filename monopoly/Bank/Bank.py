@@ -21,9 +21,9 @@ whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
 channelList = g.channels + g.silent_channels
 modifications = {}
-g_ratelimiter = g.global_ratelimiter()
-r_ratelimiter = g.global_ratelimiter(max=15)
-sr_ratelimiter = g.global_ratelimiter(max=6)
+g_ratelimiter = g.ratelimiter()
+r_ratelimiter = g.ratelimiter(max=15)
+sr_ratelimiter = g.ratelimiter(max=6)
 
 
 def message(msg, chnl):
@@ -162,6 +162,10 @@ def operands(msg, privmsg, chnl, clients, s_user):
                         and r_ratelimiter.queue(_nick)
                         and sr_ratelimiter.queue(s_user + _nick)):
                         modify(1, _nick)
+                    elif (g_ratelimiter.dropped(s_user) == 1
+                        or r_ratelimiter.dropped(_nick) == 1
+                        or sr_ratelimiter.dropped(s_user + _nick) == 1):
+                        message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
                 elif private and s_user in whitelist:
                     modify(1, _nick)
                 elif private:
@@ -171,6 +175,10 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     and r_ratelimiter.queue(s_user)
                     and sr_ratelimiter.queue(s_user + s_user)):
                     punish(s_user)
+                elif (g_ratelimiter.dropped(s_user) == 1
+                    or r_ratelimiter.dropped(s_user) == 1
+                    or sr_ratelimiter.dropped(s_user + s_user) == 1):
+                    message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
 
     for group in decrements:
         _nick = group[0].replace("_", " ")
@@ -188,12 +196,19 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     and sr_ratelimiter.queue(s_user + s_user)):
                     modify(-1, s_user)
                     message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
+                elif (g_ratelimiter.dropped(s_user) == 1
+                    or sr_ratelimiter.dropped(s_user + s_user) == 1):
+                    message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
             else:
                 if not private and _nick not in fixed:
                     if (g_ratelimiter.queue(s_user)
                         and r_ratelimiter.queue(_nick)
                         and sr_ratelimiter.queue(s_user + _nick)):
                         modify(-1, _nick)
+                    elif (g_ratelimiter.dropped(s_user) == 1
+                        or r_ratelimiter.dropped(_nick) == 1
+                        or sr_ratelimiter.dropped(s_user + _nick) == 1):
+                        message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
                 elif private and s_user in whitelist:
                     modify(-1, _nick)
                 elif private:
@@ -203,6 +218,8 @@ def operands(msg, privmsg, chnl, clients, s_user):
     if re.search("!uptime", privmsg, re.IGNORECASE):
         if g_ratelimiter.queue('global' if private else s_user):
             uptime(channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
 
     karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", privmsg, re.IGNORECASE)
     karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", privmsg, re.IGNORECASE)
@@ -214,6 +231,8 @@ def operands(msg, privmsg, chnl, clients, s_user):
                 karma(clients, _nick)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
     elif karma_underscores and karma_underscores.group(1):
         if g_ratelimiter.queue('global' if private else s_user):
             _nick = karma_underscores.group(1).replace("_", " ").strip()
@@ -228,20 +247,28 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     karma(clients, _nick)
                 else:
                     message("Nice try, {0}.".format(s_user), channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
     elif karma_underscores:
         if g_ratelimiter.queue('global' if private else s_user):
             if s_user not in blacklist:
                 karma(clients)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
 
     if privmsg.find("jakeism") != -1:
         if g_ratelimiter.queue('global' if private else s_user):
             jakeism(channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
 
     if privmsg.find("points") != -1:
         if g_ratelimiter.queue('global' if private else s_user):
             message("Welcome to {0}, the channel where everything's made up and the points don't matter.".format(channel), channel)
+        elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+            message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)
 
     if privmsg.find("!chaos") != -1:
        if s_user in whitelist:
@@ -256,3 +283,5 @@ def operands(msg, privmsg, chnl, clients, s_user):
        else:
            if g_ratelimiter.queue('global' if private else s_user):
                message("This command is whitelisted.", channel)
+           elif g_ratelimiter.dropped('global' if private else s_user) == 1:
+               message("http://cdn.meme.li/instances/600x/37067559.jpg", channel)

@@ -50,9 +50,9 @@ class Bank:
         self.swift = swift
         self.messageBuffer = []
         self.modifications = {}
-        self.g_ratelimiter = g.global_ratelimiter()
-        self.r_ratelimiter = g.global_ratelimiter(max=15)
-        self.sr_ratelimiter = g.global_ratelimiter(max=6)
+        self.g_ratelimiter = g.ratelimiter()
+        self.r_ratelimiter = g.ratelimiter(max=15)
+        self.sr_ratelimiter = g.ratelimiter(max=6)
 
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
