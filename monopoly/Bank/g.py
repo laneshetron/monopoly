@@ -5,6 +5,9 @@ import socket
 from collections import deque
 
 class ratelimit:
+    # This seems simple, but is very important!
+    # For messages within range: max * duration
+    # For average message rate: duration
     def __init__(self, max, duration):
         self.max = max
         self.duration = duration # in milliseconds
@@ -35,7 +38,7 @@ class ratelimit:
         return self.elapsed / self.max < self.duration
 
 class ratelimiter:
-    def __init__(self, max=20, duration=3600 * 1000):
+    def __init__(self, max=20, duration=180 * 1000):
         self.max = max
         self.duration = duration
         self.ratelimits = { 'global': ratelimit(self.max, self.duration) }
