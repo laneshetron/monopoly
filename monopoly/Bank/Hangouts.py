@@ -17,6 +17,7 @@ jakeisms = [
     "I've got a little grease lake going here. And I shall name you: Grease Lake!",
     "These German BMW makers are torturing asses.",
     "I'm not gonna f\*\*\*\*n Bernie Sanders my lunch at work." ]
+rand_jakeisms = []
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
@@ -136,7 +137,9 @@ class Bank:
             self.message("{0}: {1}".format(row[1], row[2]))
 
     def jakeism(self):
-        quote = random.choice(jakeisms)
+        if not rand_jakeisms:
+            rand_jakeisms = random.sample(jakeisms, len(jakeisms))
+        quote = rand_jakeisms.pop()
         self.message(quote)
 
     def subscribe(self, name, conv_id, private=False):

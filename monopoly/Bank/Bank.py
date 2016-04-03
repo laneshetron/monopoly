@@ -15,6 +15,7 @@ jakeisms = [
     "These German BMW makers are torturing asses.",
     "*standing at a urinal* Man, these things are heavy... The helmet, I mean.",
     "I'm not gonna f****n Bernie Sanders my lunch at work." ]
+rand_jakeisms = []
 
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
@@ -130,8 +131,10 @@ def parentheses(msg):
         return part
 
 def jakeism(chnl):
-    global jakeisms
-    quote = random.choice(jakeisms)
+    global jakeisms, rand_jakeisms
+    if not rand_jakeisms:
+        rand_jakeisms = random.sample(jakeisms, len(jakeisms))
+    quote = rand_jakeisms.pop()
     message(quote, chnl)
 
 def operands(msg, privmsg, chnl, clients, s_user):
