@@ -106,7 +106,7 @@ while g.config['irc']['enabled']:
             global channels
             for chnlName in channelList:
                 channels[chnlName] = Channel.Channel(chnlName, swift)
-            channels["monopoly"] = Channel.Channel("monopoly", None, True)
+            channels[nick] = Channel.Channel(nick, None, True)
 
         if msg.find("PING :") != -1:
             sub = msg.find('PING :')

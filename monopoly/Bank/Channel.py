@@ -16,6 +16,7 @@ class Channel:
 
     def __init__(self, chan, swift=None, private=False):
         self.channel = chan
+        self.nick = g.config['irc']['bot']['nick']
         self.socket = g.ircsock
         self.cursor = g.cursor
         self.db = g.db
@@ -30,7 +31,7 @@ class Channel:
     def listen(self, msg):
         if msg.find("353") != -1:
             self.loggedIn = True
-            groups = re.search("353 monopoly . {0} :(.*)".format(self.channel), msg)
+            groups = re.search("353 {0} . {1} :(.*)".format(self.nick, self.channel), msg)
             try:
                 for uname in groups.group(1).split():
                     uname = uname.strip(':+@')
@@ -62,20 +63,20 @@ class Channel:
 
             if parts[1] == "JOIN":
                 new = parts[0]
-                n_user = new[1:new.find("!")]
-                if n_user.isalpha() and n_user != "monopoly":
+                n_user = new[1:new.find("!")].lower()
+                if n_user.isalpha() and n_user != self.nick:
                     self.clients.append(n_user)
                     print("Added client %s (JOIN)" % n_user)
 
             if parts[1] == ("PART" or "QUIT"):
                 old = parts[0]
-                o_user = old[1:old.find("!")]
-                if o_user.isalpha() and o_user in self.clients and o_user != "monopoly":
+                o_user = old[1:old.find("!")].lower()
+                if o_user.isalpha() and o_user in self.clients and o_user != self.nick:
                     self.clients.remove(o_user)
                     print("Removed client %s from channel list." % o_user)
 
             if parts[1] == "KICK":
-                kicked_user = parts[3]
-                if kicked_user.isalpha() and kicked_user in self.clients and kicked_user != "monopoly":
+                kicked_user = parts[3].lower()
+                if kicked_user.isalpha() and kicked_user in self.clients and kicked_user != self.nick:
                     self.clients.remove(kicked_user)
                     print("Removed client %s from channel list. (KICKED)" % kicked_user)

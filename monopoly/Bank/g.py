@@ -49,7 +49,9 @@ class ratelimiter:
         return self.ratelimits[key].nonblocking_queue()
 
     def dropped(self, key):
-        return self.ratelimits[key].dropped_messages
+        if key in self.ratelimits:
+            return self.ratelimits[key].dropped_messages
+        return 0
 
 class safesocket(socket.socket):
     def __init__(self, *args):
