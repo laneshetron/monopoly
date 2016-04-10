@@ -19,7 +19,6 @@ readbuffer = ""
 schema.load_schema(g.db, g.cursor)
 
 def ping(response):
-    print("PONG :%s\r\n" % response)
     ircsock.send("PONG :{0}\r\n".format(response))
 
 def version(nick):

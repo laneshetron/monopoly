@@ -52,8 +52,9 @@ class Bank:
         self.messageBuffer = []
         self.modifications = {}
         self.g_ratelimiter = g.ratelimiter()
-        self.r_ratelimiter = g.ratelimiter(max=15)
+        self.r_ratelimiter = g.ratelimiter(max=12)
         self.sr_ratelimiter = g.ratelimiter(max=6)
+        self.k_ratelimiter = g.ratelimiter(1, 300000)
 
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
@@ -111,7 +112,7 @@ class Bank:
 
     def karma(self, clients, nick=None, all=False):
         clients = list(set(clients))
-        limit = ""
+        msg = limit = ""
         print(clients)
         if nick is not None:
             limit = "WHERE nick = '%s' COLLATE NOCASE LIMIT 1" % nick
@@ -134,7 +135,10 @@ class Bank:
         self.cursor.execute("SELECT * FROM monopoly {0}".format(limit))
         data = self.cursor.fetchall()
         for row in data:
-            self.message("{0}: {1}".format(row[1], row[2]))
+            msg += "{0} {1}".format(row[1], row[2])
+            if row != data[-1]:
+                msg += "\n"
+        self.message(msg)
 
     def jakeism(self):
         if not rand_jakeisms:
@@ -293,7 +297,7 @@ class Bank:
         karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)
 
         if karma_parens:
-            if self.g_ratelimiter.queue(sender):
+            if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
                 _nick = ' '.join(karma_parens.group(1).split())
                 if sender not in blacklist:
                     self.karma(clients, _nick)
@@ -301,7 +305,7 @@ class Bank:
                     self.message("Nice try, {0}.".format(sender))
 
         elif karma_underscores and karma_underscores.group(1):
-            if self.g_ratelimiter.queue(sender):
+            if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
                 _nick = karma_underscores.group(1).replace("_", " ")
                 _nick = ' '.join(_nick.split())
                 if re.search("all", _nick, re.IGNORECASE):
@@ -315,7 +319,7 @@ class Bank:
                     else:
                         self.message("Nice try, {0}.".format(sender))
         elif karma_underscores:
-            if self.g_ratelimiter.queue(sender):
+            if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
                 if sender not in blacklist:
                     self.karma(clients)
                 else:

@@ -23,8 +23,9 @@ fixed = g.config['irc']['fixed']
 channelList = g.channels + g.silent_channels
 modifications = {}
 g_ratelimiter = g.ratelimiter()
-r_ratelimiter = g.ratelimiter(max=15)
+r_ratelimiter = g.ratelimiter(max=12)
 sr_ratelimiter = g.ratelimiter(max=6)
+k_ratelimiter = g.ratelimiter(1, 300000)
 
 
 def message(msg, chnl):
@@ -96,7 +97,7 @@ def punish(nick):
 
 def karma(clients, nick=None, all=False):
     clients = list(set(clients))
-    limit = ""
+    msg = limit = ""
     print(clients)
     if nick is not None:
         limit = "WHERE nick = '%s' COLLATE NOCASE LIMIT 1" % nick
@@ -119,7 +120,10 @@ def karma(clients, nick=None, all=False):
     cursor.execute("SELECT * FROM monopoly {0}".format(limit))
     data = cursor.fetchall()
     for row in data:
-        message("{0}: {1}".format(row[1], row[2]), channel)
+        msg += "{0} {1}".format(row[1], row[2])
+        if row != data[-1]:
+            msg += " : "
+    message(msg, channel)
 
 def parentheses(msg):
     sub = msg.find("(")
@@ -145,10 +149,16 @@ def ratelimit_command(command, *args):
         or g_ratelimiter.dropped(s_user) == 1):
         message("http://i.imgur.com/v79Hl19.jpg", channel)
 
-def operands(msg, privmsg, chnl, clients, s_user):
-    global channel, private, ircsock, cursor, db
+def ratelimit_karma_command(command, *args):
+    if k_ratelimiter.queue('global'):
+        ratelimit_command(command, *args)
+    # No ratelimit image here as it may be triggered often
+
+def operands(msg, privmsg, chnl, clients, sender):
+    global channel, private, s_user, ircsock, cursor, db
     channel = chnl
     private = channel not in channelList
+    s_user = sender
     ircsock = g.ircsock
     cursor = g.cursor
     db = g.db
@@ -239,7 +249,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                 karma(clients, _nick)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_command(print_karma)
+        ratelimit_karma_command(print_karma)
 
     elif karma_underscores and karma_underscores.group(1):
         def print_karma():
@@ -255,7 +265,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     karma(clients, _nick)
                 else:
                     message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_command(print_karma)
+        ratelimit_karma_command(print_karma)
 
     elif karma_underscores:
         def print_karma():
@@ -263,7 +273,7 @@ def operands(msg, privmsg, chnl, clients, s_user):
                 karma(clients)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_command(print_karma)
+        ratelimit_karma_command(print_karma)
 
     if privmsg.find("jakeism") != -1:
         ratelimit_command(jakeism, channel)
