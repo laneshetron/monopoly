@@ -149,11 +149,6 @@ def ratelimit_command(command, *args):
         or g_ratelimiter.dropped(s_user) == 1):
         message("http://i.imgur.com/v79Hl19.jpg", channel)
 
-def ratelimit_karma_command(command, *args):
-    if k_ratelimiter.queue('global'):
-        ratelimit_command(command, *args)
-    # No ratelimit image here as it may be triggered often
-
 def operands(msg, privmsg, chnl, clients, sender):
     global channel, private, s_user, ircsock, cursor, db
     channel = chnl
@@ -249,23 +244,24 @@ def operands(msg, privmsg, chnl, clients, sender):
                 karma(clients, _nick)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_karma_command(print_karma)
+        ratelimit_command(print_karma)
 
     elif karma_underscores and karma_underscores.group(1):
         def print_karma():
             _nick = karma_underscores.group(1).replace("_", " ").strip()
             _nick = ' '.join(_nick.split())
             if re.search("all", _nick, re.IGNORECASE):
-                if s_user not in blacklist:
-                    karma(clients, all=True)
-                else:
-                    message("Nice try, {0}.".format(s_user), channel)
+                if k_ratelimiter.queue('global'):
+                    if s_user not in blacklist:
+                        karma(clients, all=True)
+                    else:
+                        message("Nice try, {0}.".format(s_user), channel)
             else:
                 if s_user not in blacklist:
                     karma(clients, _nick)
                 else:
                     message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_karma_command(print_karma)
+        ratelimit_command(print_karma)
 
     elif karma_underscores:
         def print_karma():
@@ -273,7 +269,9 @@ def operands(msg, privmsg, chnl, clients, sender):
                 karma(clients)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        ratelimit_karma_command(print_karma)
+        if k_ratelimiter.queue('global'):
+            ratelimit_command(print_karma)
+        # No ratelimit image here as it may be triggered often
 
     if privmsg.find("jakeism") != -1:
         ratelimit_command(jakeism, channel)

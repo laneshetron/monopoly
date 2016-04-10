@@ -297,7 +297,7 @@ class Bank:
         karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)
 
         if karma_parens:
-            if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
+            if self.g_ratelimiter.queue(sender):
                 _nick = ' '.join(karma_parens.group(1).split())
                 if sender not in blacklist:
                     self.karma(clients, _nick)
@@ -305,14 +305,15 @@ class Bank:
                     self.message("Nice try, {0}.".format(sender))
 
         elif karma_underscores and karma_underscores.group(1):
-            if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
+            if self.g_ratelimiter.queue(sender):
                 _nick = karma_underscores.group(1).replace("_", " ")
                 _nick = ' '.join(_nick.split())
                 if re.search("all", _nick, re.IGNORECASE):
-                    if sender not in blacklist:
-                        self.karma(clients, all=True)
-                    else:
-                        self.message("Nice try, {0}.".format(sender))
+                    if self.k_ratelimiter.queue('global'):
+                        if sender not in blacklist:
+                            self.karma(clients, all=True)
+                        else:
+                            self.message("Nice try, {0}.".format(sender))
                 else:
                     if sender not in blacklist:
                         self.karma(clients, _nick)
