@@ -17,7 +17,6 @@ jakeisms = [
     "I've got a little grease lake going here. And I shall name you: Grease Lake!",
     "These German BMW makers are torturing asses.",
     "I'm not gonna f\*\*\*\*n Bernie Sanders my lunch at work." ]
-rand_jakeisms = []
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
@@ -50,6 +49,7 @@ class Bank:
         self.cursor = g.cursor
         self.swift = swift
         self.messageBuffer = []
+        self.rand_jakeisms = []
         self.modifications = {}
         self.g_ratelimiter = g.ratelimiter()
         self.r_ratelimiter = g.ratelimiter(max=12)
@@ -141,9 +141,9 @@ class Bank:
         self.message(msg)
 
     def jakeism(self):
-        if not rand_jakeisms:
-            rand_jakeisms = random.sample(jakeisms, len(jakeisms))
-        quote = rand_jakeisms.pop()
+        if not self.rand_jakeisms:
+            self.rand_jakeisms = random.sample(jakeisms, len(jakeisms))
+        quote = self.rand_jakeisms.pop()
         self.message(quote)
 
     def subscribe(self, name, conv_id, private=False):
