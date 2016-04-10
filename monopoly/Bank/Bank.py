@@ -137,6 +137,14 @@ def jakeism(chnl):
     quote = rand_jakeisms.pop()
     message(quote, chnl)
 
+def ratelimit_command(command, *args):
+    if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
+        or (not private and g_ratelimiter.queue(s_user))):
+        command(*args)
+    elif ((private and g_ratelimiter.dropped('global') == 1)
+        or g_ratelimiter.dropped(s_user) == 1):
+        message("http://i.imgur.com/v79Hl19.jpg", channel)
+
 def operands(msg, privmsg, chnl, clients, s_user):
     global channel, private, ircsock, cursor, db
     channel = chnl
@@ -219,31 +227,22 @@ def operands(msg, privmsg, chnl, clients, s_user):
     modify_messages(channel)
 
     if re.search("!uptime", privmsg, re.IGNORECASE):
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
-            uptime(channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        ratelimit_command(uptime, channel)
 
     karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", privmsg, re.IGNORECASE)
     karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", privmsg, re.IGNORECASE)
     # TODO write exceptions for these ratelimits if in whitelist
     if karma_parens:
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
+        def print_karma():
             _nick = ' '.join(karma_parens.group(1).split())
             if s_user not in blacklist:
                 karma(clients, _nick)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        ratelimit_command(print_karma)
 
     elif karma_underscores and karma_underscores.group(1):
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
+        def print_karma():
             _nick = karma_underscores.group(1).replace("_", " ").strip()
             _nick = ' '.join(_nick.split())
             if re.search("all", _nick, re.IGNORECASE):
@@ -256,37 +255,23 @@ def operands(msg, privmsg, chnl, clients, s_user):
                     karma(clients, _nick)
                 else:
                     message("Nice try, {0}.".format(s_user), channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        ratelimit_command(print_karma)
 
     elif karma_underscores:
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
+        def print_karma():
             if s_user not in blacklist:
                 karma(clients)
             else:
                 message("Nice try, {0}.".format(s_user), channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        ratelimit_command(print_karma)
 
     if privmsg.find("jakeism") != -1:
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
-            jakeism(channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        ratelimit_command(jakeism, channel)
 
     if privmsg.find("points") != -1:
-        if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-            or (not private and g_ratelimiter.queue(s_user))):
-            message("Welcome to {0}, the channel where everything's made up " \
-                    "and the points don't matter.".format(channel), channel)
-        elif ((private and g_ratelimiter.dropped('global') == 1)
-            or g_ratelimiter.dropped(s_user) == 1):
-            message("http://i.imgur.com/v79Hl19.jpg", channel)
+        points_message = "Welcome to {0}, the channel where everything's made up " \
+                         "and the points don't matter.".format(channel)
+        ratelimit_command(message, points_message, channel)
 
     if privmsg.find("!chaos") != -1:
        if s_user in whitelist:
@@ -299,9 +284,4 @@ def operands(msg, privmsg, chnl, clients, s_user):
                message(victim + command + " " + str(damage), channel)
            action("Out of ammo...", channel)
        else:
-           if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
-               or (not private and g_ratelimiter.queue(s_user))):
-               message("This command is whitelisted.", channel)
-           elif ((private and g_ratelimiter.dropped('global') == 1)
-               or g_ratelimiter.dropped(s_user) == 1):
-               message("http://i.imgur.com/v79Hl19.jpg", channel)
+           ratelimit_command(message, "This command is whitelisted.", channel)
