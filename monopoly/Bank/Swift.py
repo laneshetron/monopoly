@@ -146,8 +146,8 @@ class Swift:
         message = " ".join(parts).strip(":")
 
         for subscriber, conv_id in self.subscribers:
-            re_mentions = re.compile('{0}|{1}'.format(subscriber.split()[0],
-                                     name_to_nick(subscriber)), re.IGNORECASE)
+            re_mentions = re.compile('{0}|{1}|{2}'.format(name_to_nick(subscriber),
+                                     *subscriber.split()), re.IGNORECASE)
             if re.search(re_mentions, message) and sender != name_to_nick(subscriber):
                 highlighted = re.sub(re_mentions, lambda x: '<b>' + x.group(0) + '</b>', message)
                 asyncio.async(self.notify('<b>{0}</b> mentioned you on IRC in <i>{1}</i>:\n"{2}"'

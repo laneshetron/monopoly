@@ -238,8 +238,8 @@ class Bank:
                     print("Exception encountered: ", e)
 
         for subscriber, conv_id in self.swift.subscribers:
-            re_mentions = re.compile('{0}|{1}'.format(subscriber.split()[0],
-                                     name_to_nick(subscriber)), re.IGNORECASE)
+            re_mentions = re.compile('{0}|{1}|{2}'.format(name_to_nick(subscriber),
+                                     *subscriber.split()), re.IGNORECASE)
             if (re.search(re_mentions, msg)
                 and user.full_name != subscriber
                 and len(clients) > 2
