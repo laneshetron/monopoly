@@ -52,7 +52,7 @@ class Channel:
 
                 if self.swift:
                     try:
-                        self.swift.write("{0} {1}\r\n".format(sender, privmsg))
+                        self.swift.put("{0} {1}".format(sender, privmsg))
                     except Exception as e:
                         # swift is broken, hangups probably crashed
                         print("Could not write to Swift. Hangouts has likely crashed.", e)

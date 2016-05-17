@@ -70,13 +70,11 @@ def modify_messages(chnl):
     modifications = {}
 
 def uptime(chnl):
-    running_elapsed = int(time.time()) - g.starttime
-    disconnect_elapsed = int(time.time()) - g.lastDisconnect
     message("Monopoly has been running for: {0}".format(
-        str(timedelta(seconds=running_elapsed))), chnl)
-    if running_elapsed != disconnect_elapsed:
+        str(timedelta(seconds=g.uptime.elapsed))), chnl)
+    if g.uptime.elapsed != g.uptime.elapsedDisconnect:
         message("Time since last disconnect: {0}".format(
-            str(timedelta(seconds=disconnect_elapsed))), chnl)
+            str(timedelta(seconds=g.uptime.elapsedDisconnect))), chnl)
 
 def punish(nick):
     cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))

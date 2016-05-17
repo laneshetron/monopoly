@@ -3,6 +3,7 @@ import json
 import sqlite3
 import socket
 from collections import deque
+from multiprocessing import Value
 
 class ratelimit:
     # This seems simple, but is very important!
@@ -69,8 +70,30 @@ class safesocket(socket.socket):
         except Exception as e:
             print('Could not write to socket: ', e)
 
-starttime = int(time.time())
-lastDisconnect = 0
+class Uptime:
+    def __init__(self):
+        self._startTime = Value('L', int(time.time()))
+        self._lastDisconnect = Value('L', int(time.time()))
+
+    # This is thread-safe
+    def update(self):
+        self._lastDisconnect.value = int(time.time())
+
+    @property
+    def startTime(self):
+        return self._startTime.value
+
+    @property
+    def lastDisconnect(self):
+        return self._lastDisconnect.value
+
+    @property
+    def elapsed(self):
+        return int(time.time()) - self.startTime
+
+    @property
+    def elapsedDisconnect(self):
+        return int(time.time()) - self.lastDisconnect
 
 with open('config/config.json') as config_file:
     config = json.load(config_file)
@@ -80,4 +103,9 @@ silent_channels = config['irc']['silent_channels']
 
 db = sqlite3.connect(config['db']['location'])
 cursor = db.cursor()
+
+# These must be initialized by each process
 ircsock = None
+uptime = None
+queues = {}
+#

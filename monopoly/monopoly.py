@@ -1,141 +1,64 @@
-import socket
-import errno
-import time
-from copy import copy
-from subprocess import Popen, PIPE
-from Bank import Channel, g
+from multiprocessing import Process, Queue
+from Bank import g
 from config import schema
+import time
+import Hangups
+import Irc
 
-server = g.config['irc']['server']
-port = g.config['irc']['port']
-nick = g.config['irc']['bot']['nick']
-version = g.config['irc']['bot']['version']
-pswd = g.config['irc']['bot']['password']
-channelList = g.channels + g.silent_channels
-channels = {}
-readbuffer = ""
+class Monopoly:
+    def __init__(self):
+        self.irc = None
+        self.hangouts = None
 
-# create database if not already existant
-schema.load_schema(g.db, g.cursor)
+        # Construct database if not present
+        schema.load_schema(g.db, g.cursor)
 
-def ping(response):
-    ircsock.send("PONG :{0}\r\n".format(response))
+        # Start uptime timer
+        self.uptime = g.Uptime()
 
-def version(nick):
-    print("NOTICE %s : VERSION monopoly %s\r\n" % (nick, version))
-    ircsock.send("NOTICE {0} : VERSION monopoly {1}\r\n".format(nick, version))
+        self.queues = {}
+        for process in ['irc', 'hangouts']:
+            if g.config[process]['enabled']:
+                self.queues[process] = Queue()
 
-def reset():
-    if not Channel.reset():
-        return
-    try:
-        reload(Channel)
-        for key, chnl in channels.items():
-            newObj = Channel.Empty()
-            newObj.__class__ = Channel.Channel
-            newObj.__dict__ = copy(chnl.__dict__)
-            channels[key] = newObj
-    except Exception as e:
-        print(e)
+    def start(self):
+        # Start services
+        if not g.config['irc']['enabled'] and not g.config['hangouts']['enabled']:
+            print("Hangouts and IRC are both disabled.\n" \
+                  "You can configure these options in config/config.json")
 
-def connect():
-    up = False
+        if g.config['irc']['enabled']:
+            print("Starting IRC.")
+            self.start_irc()
 
-    while not up:
-        try:
-            global ircsock
-            g.lastDisconnect = int(time.time())
-            ircsock = g.safesocket(socket.AF_INET, socket.SOCK_STREAM)
-            ircsock.settimeout(5)
-            ircsock.connect((server, port))
-            ircsock.settimeout(None)
-            print("PASS %s\r\n" % pswd)
-            ircsock.send(("PASS %s\r\n" % pswd))
-            print("NICK %s\r\n" % nick)
-            ircsock.send(("NICK %s\r\n" % nick))
-            readbuffer = ""
-            ircsock.send("USER {0} {0} {1} :{2}\r\n".format(
-                nick, server, g.config['irc']['bot']['fullname']))
-            g.ircsock = ircsock
-            up = True
-        except socket.timeout:
-            print("Connection timed out. Retrying in 1 second...")
-            time.sleep(1)
-        except socket.error as e:
-            if e.errno == errno.ECONNREFUSED:
-                print("Connection error: " + str(e))
-                print("Retrying in 1 second...")
-                time.sleep(1)
-            else:
-                raise e
+        if g.config['hangouts']['enabled']:
+            print("Starting Hangouts integration.")
+            self.start_hangouts()
 
-if not g.config['irc']['enabled'] and not g.config['hangouts']['enabled']:
-    print("Hangouts and IRC are both disabled.\nYou can configure these " +
-          "options in config/config.json.")
+    def start_irc(self):
+        self.irc = Process(target=Irc.main, args=(self.uptime, self.queues))
+        self.irc.start()
 
-if g.config['irc']['enabled']:
-    connect()
+    def start_hangouts(self):
+        kwargs = {'log': 'hangups.log',
+                  'token_path': 'hangouts_token.txt'}
+        self.hangouts = Process(target=Hangups.main,
+                                args=(self.uptime, self.queues),
+                                kwargs=kwargs)
+        self.hangouts.start()
 
-if g.config['hangouts']['enabled']:
-    print("Starting Hangouts integration.")
-    hangouts = Popen(["python3", "Hangups.py", "--log", "hangups.log",
-                      "--token-path", "hangouts_token.txt"],
-                      stdin=PIPE, bufsize=0, universal_newlines=True)
-    swift = hangouts.stdin
+if __name__ == '__main__':
+    monopoly = Monopoly()
+    monopoly.start()
 
-while g.config['irc']['enabled']:
-    try:
-        data = ircsock.recv(2048).decode(errors='replace')
-        data = data.strip('\r\n')
-    except socket.error as e:
-        print("Exception encountered: ", e)
-        connect()
-        continue
+    while monopoly.irc or monopoly.hangouts:
+        if monopoly.irc:
+            if not monopoly.irc.is_alive():
+                print("IRC has crashed. Restarting...")
+                monopoly.start_irc()
+        if monopoly.hangouts:
+            if not monopoly.hangouts.is_alive():
+                print("Hangouts has crashed. Restarting...")
+                monopoly.start_hangouts()
 
-    if len(data) == 0:
-        print("Socket disconnected.\nRetrying connection...")
-        connect()
-        continue
-
-    for msg in data.splitlines():
-        print(msg)
-
-        if msg.find(":Welcome to the Arbor IRC") != -1:
-            sub = msg.find(":Welcome to the Arbor IRC")
-            global channels
-            for chnlName in channelList:
-                channels[chnlName] = Channel.Channel(chnlName, swift)
-            channels[nick] = Channel.Channel(nick, None, True)
-
-        if msg.find("PING :") != -1:
-            sub = msg.find('PING :')
-            ping(msg[sub + 6:])
-
-        if msg.find("VERSION") != -1:
-            sub = msg.find("!nospoof")
-            version(msg[1:sub])
-
-        # Direct message to the corresponding channel object
-        # TODO this definitely needs to be cleaned up
-        parts = msg.rsplit()
-        if len(parts) > 2:
-            chnlName = parts[2].strip(':')
-            if len(parts) > 4:
-                if parts[4] in channels:
-                    channels[parts[4]].listen(msg)
-                elif chnlName in channels:
-                    channels[chnlName].listen(msg)
-            else:
-                if chnlName in channels:
-                    channels[chnlName].listen(msg)
-
-            sender = parts[0]
-            sender = sender[1:sender.find("!")]
-            if parts[1] == "PRIVMSG":
-                privmsg = ' '.join(parts[2:])
-                if privmsg.find("!reload") != -1:
-                    if sender == "lshetron":
-                        reset()
-                    else:
-                        ircsock.send("PRIVMSG {0} :{1}\r\n".format(chnlName,
-                                     "This command is whitelisted."))
+        time.sleep(5)

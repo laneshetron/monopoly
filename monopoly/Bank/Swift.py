@@ -1,7 +1,7 @@
 # Swift Message & Alert System
 #
 # Opens and accepts messages over a socket
-# and from stdin for irc channel alerts
+# and from a multiprocessing queue for irc channel alerts
 
 import asyncio
 import sqlite3
@@ -58,7 +58,9 @@ class Swift:
         self.subscribers = Subscribers(self.cursor.fetchall())
 
         asyncio.async(self.open_swift())
-        self.loop.add_reader(sys.stdin, self.read_stdin)
+        self.loop.add_reader(g.queues['hangouts']._reader,
+                             self.read_queue,
+                             g.queues['hangouts'])
 
     @asyncio.coroutine
     def open_swift(self):
@@ -133,23 +135,20 @@ class Swift:
         conv = self.h_conv_list.get(conv_id)
         asyncio.async(conv.send_message(segment, image_file=None))
 
-    # Listen on stdin for irc alerts
-    def read_stdin(self):
-        message = sys.stdin.readline()
-        if len(message) == 0:
-            print('IRC is kill. Closing read from stdin.')
-            self.loop.remove_reader(sys.stdin)
-            return
-        message = message.strip()
-        print("Swift received from stdin: ", message)
-        sender, channel, *parts = message.split()
-        message = " ".join(parts).strip(":")
+    # Read hangouts queue for messages from other processes
+    def read_queue(self, queue):
+        while not queue.empty():
+            message = queue.get_nowait()
+            message = message.strip()
+            print("Swift received from irc: {0}".format(message))
+            sender, channel, *parts = message.split()
+            message = " ".join(parts).strip(":")
 
-        for subscriber, conv_id in self.subscribers:
-            re_mentions = re.compile('{0}|{1}|{2}'.format(name_to_nick(subscriber),
-                                     *subscriber.split()), re.IGNORECASE)
-            if re.search(re_mentions, message) and sender != name_to_nick(subscriber):
-                highlighted = re.sub(re_mentions, lambda x: '<b>' + x.group(0) + '</b>', message)
-                asyncio.async(self.notify('<b>{0}</b> mentioned you on IRC in <i>{1}</i>:\n"{2}"'
-                    .format(sender, channel, highlighted), conv_id))
-                print("Forwarded IRC mention to {0}".format(subscriber))
+            for subscriber, conv_id in self.subscribers:
+                re_mentions = re.compile('{0}|{1}|{2}'.format(name_to_nick(subscriber),
+                                         *subscriber.split()), re.IGNORECASE)
+                if re.search(re_mentions, message) and sender != name_to_nick(subscriber):
+                    highlighted = re.sub(re_mentions, lambda x: '<b>' + x.group(0) + '</b>', message)
+                    asyncio.async(self.notify('<b>{0}</b> mentioned you on IRC in <i>{1}</i>:\n"{2}"'
+                        .format(sender, channel, highlighted), conv_id))
+                    print("Forwarded IRC mention to {0}".format(subscriber))

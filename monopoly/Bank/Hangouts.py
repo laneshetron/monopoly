@@ -289,9 +289,8 @@ class Bank:
         # TODO need shared health monitoring between hangouts and IRC
         if re.search("!uptime", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
-                elapsed = int(time.time()) - g.starttime
                 self.message("Monopoly has been running for: {0}".format(
-                    str(timedelta(seconds=elapsed))))
+                    str(timedelta(seconds=g.uptime.elapsed))))
 
         karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", msg, re.IGNORECASE)
         karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)

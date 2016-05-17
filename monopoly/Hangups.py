@@ -228,8 +228,11 @@ def dir_maker(path):
             sys.exit('Failed to create directory: {}'.format(e))
 
 
-def main():
+def main(uptime, queues, **kwargs):
     """Main entry point."""
+    g.uptime = uptime
+    g.queues = queues
+
     # Build default paths for files.
     dirs = appdirs.AppDirs('hangups', 'hangups')
     default_log_path = os.path.join(dirs.user_log_dir, 'hangups.log')
@@ -303,10 +306,11 @@ def main():
     args = parser.parse_args()
 
     # Create all necessary directories.
-    for path in [args.log, args.token_path]:
+    for path in [kwargs.get('log') or args.log,
+                 kwargs.get('token_path') or args.token_path]:
         dir_maker(path)
 
-    logging.basicConfig(filename=args.log,
+    logging.basicConfig(filename=kwargs.get('log') or args.log,
                         level=logging.DEBUG if args.debug else logging.WARNING,
                         format=LOG_FORMAT)
     # urwid makes asyncio's debugging logs VERY noisy, so adjust the log level:
@@ -332,7 +336,7 @@ def main():
 
     try:
         ChatUI(
-            args.token_path, {
+            kwargs.get('token_path') or args.token_path, {
                 'next_tab': args.key_next_tab,
                 'prev_tab': args.key_prev_tab,
                 'close_tab': args.key_close_tab,
