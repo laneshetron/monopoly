@@ -11,6 +11,8 @@
 	"fixed": [],
         "bot": {
             "nick":"monopoly",
+	    "backup_nicks": ["REALmonopoly", "ThePrince", "UnclePennybags",
+	                     "Trump2016", "GiveMeMyNick", "CantStopWontStop"],
             "fullname":"Monopoly Karma",
             "version":"1.0",
             "password":""

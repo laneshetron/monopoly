@@ -100,6 +100,7 @@ with open('config/config.json') as config_file:
 
 channels = config['irc']['channels']
 silent_channels = config['irc']['silent_channels']
+nick = config['irc']['bot']['nick']
 
 db = sqlite3.connect(config['db']['location'])
 cursor = db.cursor()

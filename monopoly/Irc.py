@@ -1,17 +1,24 @@
 import socket
 import errno
 import time
+import random
 from copy import copy
 from Bank import Channel, g
 
 server = g.config['irc']['server']
 port = g.config['irc']['port']
 nick = g.config['irc']['bot']['nick']
+backup_nicks = g.config['irc']['bot']['backup_nicks']
 version = g.config['irc']['bot']['version']
 pswd = g.config['irc']['bot']['password']
 channelList = g.channels + g.silent_channels
 channels = {}
 readbuffer = ""
+recheckTimer = 0
+
+def set_nick(nick):
+    print("NICK {0}\r\n".format(nick))
+    ircsock.send("NICK {0}\r\n".format(nick))
 
 def ping(response):
     ircsock.send("PONG :{0}\r\n".format(response))
@@ -46,8 +53,7 @@ def connect():
             ircsock.settimeout(None)
             print("PASS %s\r\n" % pswd)
             ircsock.send(("PASS %s\r\n" % pswd))
-            print("NICK %s\r\n" % nick)
-            ircsock.send(("NICK %s\r\n" % nick))
+            set_nick(nick)
             readbuffer = ""
             ircsock.send("USER {0} {0} {1} :{2}\r\n".format(
                 nick, server, g.config['irc']['bot']['fullname']))
@@ -101,22 +107,35 @@ def main(uptime, queues, **kwargs):
                 sub = msg.find("!nospoof")
                 version(msg[1:sub])
 
+            # Check for primary nick availability periodically
+            if g.nick != nick and int(time.time()) - recheckTimer > 5:
+                set_nick(nick)
+                recheckTimer = int(time.time())
+
             # Direct message to the corresponding channel object
             # TODO this definitely needs to be cleaned up
             parts = msg.rsplit()
             if len(parts) > 2:
+                if parts[1] == '433' and parts[2] == '*':
+                    # Nick is taken
+                    backup = random.choice(backup_nicks)
+                    set_nick(backup)
+                    g.nick = backup
+                    recheckTimer = int(time.time())
+
                 chnlName = parts[2].strip(':')
-                if len(parts) > 4:
-                    if parts[4] in channels:
-                        channels[parts[4]].listen(msg)
-                    elif chnlName in channels:
-                        channels[chnlName].listen(msg)
-                else:
-                    if chnlName in channels:
-                        channels[chnlName].listen(msg)
+                if len(parts) > 4 and parts[4] in channels:
+                    channels[parts[4]].listen(msg)
+                elif chnlName in channels:
+                    channels[chnlName].listen(msg)
+                elif chnlName == g.nick:
+                    channels[nick].listen(msg)
 
                 sender = parts[0]
                 sender = sender[1:sender.find("!")]
+                if parts[1] == 'NICK' and sender == g.nick:
+                    g.nick = nick
+
                 if parts[1] == "PRIVMSG":
                     privmsg = ' '.join(parts[2:])
                     if privmsg.find("!reload") != -1:

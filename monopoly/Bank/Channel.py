@@ -16,7 +16,7 @@ class Channel:
 
     def __init__(self, chan, swift=None, private=False):
         self.channel = chan
-        self.nick = g.config['irc']['bot']['nick']
+        self.nick = g.nick
         self.socket = g.ircsock
         self.cursor = g.cursor
         self.db = g.db
