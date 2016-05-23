@@ -108,7 +108,7 @@ def main(uptime, queues, **kwargs):
                 version(msg[1:sub])
 
             # Check for primary nick availability periodically
-            if g.nick != nick and int(time.time()) - recheckTimer > 5:
+            if g.nick != nick and int(time.time()) - recheckTimer > 30:
                 set_nick(nick)
                 recheckTimer = int(time.time())
 
