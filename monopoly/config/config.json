@@ -20,7 +20,8 @@
     },
     "hangouts": {
         "enabled":false,
-        "auth_token":""
+        "auth_token":"",
+	"tasker":false
     },
     "db": {
         "location":"monopoly.db",
