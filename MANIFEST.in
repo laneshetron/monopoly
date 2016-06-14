@@ -1,3 +1,5 @@
 include README.md
 include LICENSE
 include monopoly/config/config.json
+include monopoly/config/migrations/*.sql
+include monopoly/data/nltk/english
