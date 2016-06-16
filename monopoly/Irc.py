@@ -4,6 +4,7 @@ import time
 import random
 from copy import copy
 from Bank import Channel, g
+from Bank.Trumpisms import Trumpisms
 
 server = g.config['irc']['server']
 port = g.config['irc']['port']
@@ -73,6 +74,7 @@ def connect():
 def main(uptime, queues, **kwargs):
     g.uptime = uptime
     swift = queues['hangouts']
+    donald = Trumpisms()
 
     connect()
     while True:
@@ -96,8 +98,8 @@ def main(uptime, queues, **kwargs):
                 sub = msg.find(":Welcome to the Arbor IRC")
                 global channels
                 for chnlName in channelList:
-                    channels[chnlName] = Channel.Channel(chnlName, swift)
-                channels[nick] = Channel.Channel(nick, None, True)
+                    channels[chnlName] = Channel.Channel(chnlName, donald, swift)
+                channels[nick] = Channel.Channel(nick, donald, None, True)
 
             if msg.find("PING :") != -1:
                 sub = msg.find('PING :')

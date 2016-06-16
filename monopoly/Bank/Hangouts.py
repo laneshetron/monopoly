@@ -42,12 +42,13 @@ def name_to_nick(name):
         return None
 
 class Bank:
-    def __init__(self, client, conv_list, swift):
+    def __init__(self, client, conv_list, swift, donald):
         self.client = client
         self.conv_list = conv_list
         self.db = g.db
         self.cursor = g.cursor
         self.swift = swift
+        self.donald = donald
         self.messageBuffer = []
         self.rand_jakeisms = []
         self.modifications = {}
@@ -332,10 +333,10 @@ class Bank:
         # Avoid outputting twice
         if re.search("trumpism", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
-                self.message("<i>{0}</i>".format(g.donald.trumpism()))
+                self.message("<i>{0}</i>".format(self.donald.trumpism()))
         else:
             # TODO should ratelimit
-            provoked = g.donald.provoke(msg)
+            provoked = self.donald.provoke(msg)
             if provoked:
                 self.message("<i>{0}</i>".format(provoked))
 

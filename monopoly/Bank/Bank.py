@@ -140,7 +140,7 @@ def jakeism(chnl):
     message(quote, chnl)
 
 def trumpism():
-    message(g.donald.trumpism(), channel)
+    message(donald.trumpism(), channel)
 
 def ratelimit_command(command, *args):
     if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
@@ -150,11 +150,12 @@ def ratelimit_command(command, *args):
         or g_ratelimiter.dropped(s_user) == 1):
         message("http://i.imgur.com/v79Hl19.jpg", channel)
 
-def operands(msg, privmsg, chnl, clients, sender):
-    global channel, private, s_user, ircsock, cursor, db
+def operands(msg, privmsg, chnl, clients, sender, trumpisms):
+    global channel, private, s_user, ircsock, cursor, db, donald
     channel = chnl
     private = channel not in channelList
     s_user = sender
+    donald = trumpisms
     ircsock = g.ircsock
     cursor = g.cursor
     db = g.db
@@ -302,6 +303,6 @@ def operands(msg, privmsg, chnl, clients, sender):
         # This won't be necessary once it's fixed in Channel.py
         # TODO should probably ratelimit this
         _privmsg = ' '.join(privmsg.rsplit()[1:])[1:].lower()
-        provoked = g.donald.provoke(_privmsg)
+        provoked = donald.provoke(_privmsg)
         if provoked:
             message(provoked, channel)
