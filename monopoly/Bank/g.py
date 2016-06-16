@@ -5,7 +5,6 @@ import sqlite3
 import socket
 from collections import deque
 from multiprocessing import Value
-from Bank.Trumpisms import Trumpisms
 
 class ratelimit:
     # This seems simple, but is very important!
@@ -112,8 +111,6 @@ nick = config['irc']['bot']['nick']
 
 db = sqlite3.connect(config['db']['location'])
 cursor = db.cursor()
-
-donald = Trumpisms()
 
 # These must be initialized by each process
 ircsock = None

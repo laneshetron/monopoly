@@ -14,12 +14,13 @@ class Empty:
 
 class Channel:
 
-    def __init__(self, chan, swift=None, private=False):
+    def __init__(self, chan, donald, swift=None, private=False):
         self.channel = chan
         self.nick = g.nick
         self.socket = g.ircsock
         self.cursor = g.cursor
         self.db = g.db
+        self.donald = donald
         self.swift = swift
         self.private = private
         self.loggedIn = self.private
@@ -60,7 +61,7 @@ class Channel:
                         self.swift = None
 
                 Bank.operands(msg, privmsg, sender if self.private else self.channel,
-                              self.clients, sender)
+                              self.clients, sender, self.donald)
 
             if parts[1] == "JOIN":
                 new = parts[0]

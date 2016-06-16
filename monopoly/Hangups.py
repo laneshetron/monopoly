@@ -12,6 +12,7 @@ import readlike
 
 from Bank.Hangouts import Bank
 from Bank.Swift import Swift
+from Bank.Trumpisms import Trumpisms
 from Bank import g
 
 import hangups
@@ -111,10 +112,12 @@ class ChatUI(object):
         if not self._disable_notifier:
             self._notifier = Notifier(self._conv_list)
 
+        donald = Trumpisms()
+
         # Start Swift server
         handlers = (self._client, self._conv_list)
         swift = Swift(*handlers)
-        self.bank = Bank(*handlers, swift=swift)
+        self.bank = Bank(*handlers, swift=swift, donald=donald)
 
     def _on_event(self, conv_event):
         """Open conversation tab for new messages & pass events to notifier."""
