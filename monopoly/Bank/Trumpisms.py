@@ -62,8 +62,8 @@ class Trumpisms:
         adjusted = []
         for x in matches:
             b_tokens = self.create_tokens(x[0])
-            score = self.score_ngrams(b_tokens)
-            adjusted += (x[0], x[1] + score, x[2])
+            score = self.score_ngrams(tokens, b_tokens)
+            adjusted.append((x[0], x[1] + score, x[2]))
         top = [x for x in adjusted if x[1] == adjusted[0][1] ]
         return top
 
@@ -73,7 +73,7 @@ class Trumpisms:
         top = self.get_best(message)
         if top and top[0][1] > 90:
             c = random.choice(top)
-            return self.trumpisms[c[0]]
+            return self.trumpisms[int(c[2])]
         return False
 
     def trumpism(self):
