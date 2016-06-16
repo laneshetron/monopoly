@@ -10,8 +10,9 @@ class Monopoly:
         self.irc = None
         self.hangouts = None
 
-        # Construct database if not present
+        # Ensure database is in sync
         schema.load_schema(g.db, g.cursor)
+        schema.migrate(g.db, g.cursor)
 
         # Start uptime timer
         self.uptime = g.Uptime()

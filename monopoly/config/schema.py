@@ -22,6 +22,10 @@ def load_schema(db, cursor):
                     conv_id TEXT);
 
     CREATE TABLE IF NOT EXISTS
+        trumpisms(id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  quote TEXT);
+
+    CREATE TABLE IF NOT EXISTS
         words_index(word TEXT PRIMARY KEY,
                     count INTEGER);
 
@@ -41,10 +45,11 @@ def load_schema(db, cursor):
     db.commit()
 
 def migrate(db, cursor):
-    # Migrations must be explicitly listed here to be run
+    # Migrations must be explicitly listed here (in order!) to be run
     migrations = {
         1: 'migrations/1-WordsIndex.sql',
-        2: 'migrations/2-TrumpismsIndex.sql' }
+        2: 'migrations/2-TrumpismsIndex.sql',
+        3: 'migrations/3-TrumpQuotes.sql' }
 
     cursor.execute('SELECT * FROM schema_migrations;')
     versions = cursor.fetchall()
