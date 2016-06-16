@@ -139,6 +139,9 @@ def jakeism(chnl):
     quote = rand_jakeisms.pop()
     message(quote, chnl)
 
+def trumpism():
+    message(g.donald.trumpism(), channel)
+
 def ratelimit_command(command, *args):
     if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
         or (not private and g_ratelimiter.queue(s_user))):
@@ -291,3 +294,14 @@ def operands(msg, privmsg, chnl, clients, sender):
            action("Out of ammo...", channel)
        else:
            ratelimit_command(message, "This command is whitelisted.", channel)
+
+    # Avoid outputting twice
+    if re.search("trumpism", privmsg, re.IGNORECASE):
+        ratelimit_command(trumpism)
+    else:
+        # This won't be necessary once it's fixed in Channel.py
+        # TODO should probably ratelimit this
+        _privmsg = ' '.join(privmsg.rsplit()[1:])[1:].lower()
+        provoked = g.donald.provoke(_privmsg)
+        if provoked:
+            message(provoked, channel)

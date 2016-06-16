@@ -1,9 +1,11 @@
+import os
 import time
 import json
 import sqlite3
 import socket
 from collections import deque
 from multiprocessing import Value
+from Bank.Trumpisms import Trumpisms
 
 class ratelimit:
     # This seems simple, but is very important!
@@ -95,8 +97,14 @@ class Uptime:
     def elapsedDisconnect(self):
         return int(time.time()) - self.lastDisconnect
 
-with open('config/config.json') as config_file:
+_g_root = os.path.dirname(os.path.realpath(__file__))
+
+# TODO May want to look into using the resources module for this stuff
+with open(os.path.join(_g_root, '../config/config.json')) as config_file:
     config = json.load(config_file)
+
+with open(os.path.join(_g_root, '../data/nltk/english')) as f:
+    stopwords = f.read().splitlines()
 
 channels = config['irc']['channels']
 silent_channels = config['irc']['silent_channels']
@@ -104,6 +112,8 @@ nick = config['irc']['bot']['nick']
 
 db = sqlite3.connect(config['db']['location'])
 cursor = db.cursor()
+
+donald = Trumpisms()
 
 # These must be initialized by each process
 ircsock = None

@@ -329,6 +329,16 @@ class Bank:
             if self.g_ratelimiter.queue(sender):
                 self.jakeism()
 
+        # Avoid outputting twice
+        if re.search("trumpism", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                self.message("<i>{0}</i>".format(g.donald.trumpism()))
+        else:
+            # TODO should ratelimit
+            provoked = g.donald.provoke(msg)
+            if provoked:
+                self.message("<i>{0}</i>".format(provoked))
+
         self.send(self.flush(), conv)
 
     def flush(self):

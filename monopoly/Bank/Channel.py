@@ -42,6 +42,7 @@ class Channel:
             print(self.clients)
 
         if self.loggedIn:
+            # XXX should we strip the preceding channel info here?
             parts = msg.rsplit()
             privmsg = ""
             sender = parts[0]
