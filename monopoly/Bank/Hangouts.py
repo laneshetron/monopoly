@@ -340,7 +340,7 @@ class Bank:
 
         elif re.search("!ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
-                self.message("Total: <b>{0}</b>".format(self.ding))
+                self.message("Total: <b>{0}</b>".format(g.ding))
 
         elif re.search("ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
