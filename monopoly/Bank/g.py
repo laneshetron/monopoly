@@ -105,6 +105,8 @@ with open(os.path.join(_g_root, '../config/config.json')) as config_file:
 with open(os.path.join(_g_root, '../data/nltk/english')) as f:
     stopwords = f.read().splitlines()
 
+ding = 0
+
 channels = config['irc']['channels']
 silent_channels = config['irc']['silent_channels']
 nick = config['irc']['bot']['nick']

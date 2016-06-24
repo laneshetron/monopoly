@@ -308,7 +308,7 @@ class Bank:
             if self.g_ratelimiter.queue(sender):
                 _nick = karma_underscores.group(1).replace("_", " ")
                 _nick = ' '.join(_nick.split())
-                if re.search("all", _nick, re.IGNORECASE):
+                if re.match("all", _nick, re.IGNORECASE):
                     if self.k_ratelimiter.queue('global'):
                         if sender not in blacklist:
                             self.karma(clients, all=True)
@@ -329,6 +329,22 @@ class Bank:
         if msg.find("jakeism") != -1:
             if self.g_ratelimiter.queue(sender):
                 self.jakeism()
+
+        # Useful for counting arbitrary things of sudden importance
+        # e.g. cups of coffee, number of times someone uses the word "synergy"
+        # in a meeting, how many times your coworker paces through the hallways...
+        if re.search("!ding reset", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender) and g.ding > 0:
+                g.ding = 0
+                self.message("Reset to 0")
+
+        elif re.search("!ding", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                self.message("Total: <b>{0}</b>".format(self.ding))
+
+        elif re.search("ding", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                g.ding += 1
 
         # Avoid outputting twice
         if re.search("trumpism", msg, re.IGNORECASE):
