@@ -73,7 +73,7 @@ class Trumpisms:
         top = self.get_best(message)
         if top and top[0][1] > 90:
             c = random.choice(top)
-            print(', '.join([self.trumpisms[int(c[2])], str(c[1])))
+            print(', '.join([self.trumpisms[int(c[2])], str(c[1])]))
             return self.trumpisms[int(c[2])]
         return False
 

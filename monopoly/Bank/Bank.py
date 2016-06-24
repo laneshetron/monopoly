@@ -139,6 +139,14 @@ def jakeism(chnl):
     quote = rand_jakeisms.pop()
     message(quote, chnl)
 
+def ding(count):
+    g.ding += count
+
+def ding_reset():
+    if g.ding > 0:
+        g.ding = 0
+        message("Reset to 0", channel)
+
 def trumpism():
     message(donald.trumpism(), channel)
 
@@ -252,7 +260,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
         def print_karma():
             _nick = karma_underscores.group(1).replace("_", " ").strip()
             _nick = ' '.join(_nick.split())
-            if re.search("all", _nick, re.IGNORECASE):
+            if re.match("all", _nick, re.IGNORECASE):
                 if k_ratelimiter.queue('global'):
                     if s_user not in blacklist:
                         karma(clients, all=True)
@@ -295,6 +303,15 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
            action("Out of ammo...", channel)
        else:
            ratelimit_command(message, "This command is whitelisted.", channel)
+
+    if re.search("!ding reset", msg, re.IGNORECASE):
+        ratelimit_command(ding_reset)
+
+    elif re.search("!ding", msg, re.IGNORECASE):
+        ratelimit_command(message, "Total: {0}".format(g.ding), channel)
+
+    elif re.search("ding", msg, re.IGNORECASE):
+        ratelimit_command(ding, 1)
 
     # Avoid outputting twice
     if re.search("trumpism", privmsg, re.IGNORECASE):
