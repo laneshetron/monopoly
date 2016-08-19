@@ -224,7 +224,7 @@ class Bank:
                     else:
                         self.modify(-1, _nick)
 
-        imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.-]+)(.jpg|.png|.jpeg|.gif)\/?)", msg)
+        imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.-]+)(\.jpg|\.png|\.jpeg|\.gif)\/?)", msg)
         for link in imageLinks:
             if link[0].find("https://lh3.googleusercontent") == -1:
                 tmp_file = "/home/lshetron/.monopoly/tmp/" + str(random.randint(0,100)) + link[1]
