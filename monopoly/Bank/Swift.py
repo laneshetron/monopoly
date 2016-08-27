@@ -6,6 +6,7 @@
 import asyncio
 import sqlite3
 import socket
+import ssl
 import sys
 import re
 from hangups import ChatMessageSegment
@@ -66,6 +67,8 @@ class Swift:
     def open_swift(self):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock = ssl.wrap_socket(sock, server_side=True,
+                                   ssl_version=ssl.PROTOCOL_TLSv1_2)
             sock.setblocking(0)
             sock.bind((self.host, self.port))
             sock.listen(5)
