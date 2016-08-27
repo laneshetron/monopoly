@@ -16,7 +16,7 @@ from Bank.Trumpisms import Trumpisms
 from Bank import g
 
 import hangups
-from hangups import hangouts_pb2
+from hangups.ui.emoticon import replace_emoticons
 from hangups.ui.notify import Notifier
 from hangups.ui.utils import get_conv_name
 from hangups.ui.utils import add_color_to_scheme
@@ -199,6 +199,14 @@ class ChatUI(object):
                     'A Hangout call is ongoing.'
                 ),
             }.get(conv_event.event_type, 'Unknown Hangout call event.')
+            return MessageWidget(conv_event.timestamp, text, datetimefmt,
+                                 show_date=is_new_day)
+        elif isinstance(conv_event, hangups.GroupLinkSharingModificationEvent):
+            status_on = hangups.GROUP_LINK_SHARING_STATUS_ON
+            status_text = ('on' if conv_event.new_status == status_on
+                           else 'off')
+            text = '{} turned {} joining by link.'.format(user.first_name,
+                                                          status_text)
             return MessageWidget(conv_event.timestamp, text, datetimefmt,
                                  show_date=is_new_day)
         else:
