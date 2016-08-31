@@ -194,10 +194,13 @@ class Bank:
             else:
                 if _nick.lower() != sender:
                     if sender not in blacklist and _nick not in fixed:
-                        if (self.g_ratelimiter.queue(sender)
-                            and self.r_ratelimiter.queue(_nick)
-                            and self.sr_ratelimiter.queue(sender + _nick)):
-                            self.modify(1, _nick)
+                        if len(clients) > 2 or sender in whitelist:
+                            if (self.g_ratelimiter.queue(sender)
+                                and self.r_ratelimiter.queue(_nick)
+                                and self.sr_ratelimiter.queue(sender + _nick)):
+                                self.modify(1, _nick)
+                        else:
+                            self.message("You are not on the whitelist for private messages.")
                 else:
                     self.punish(sender)
 
@@ -212,17 +215,20 @@ class Bank:
             if delta is not None and sender in whitelist:
                 self.modify(delta, _nick)
             else:
-                if (self.g_ratelimiter.queue(sender)
-                    and self.r_ratelimiter.queue(_nick)
-                    and self.sr_ratelimiter.queue(sender + nick)):
-                    if sender in blacklist:
-                        self.modify(-1, sender)
-                        self.message("You've lost your downvoting privileges, {0}."
-                            .format(sender))
-                    elif _nick in fixed:
-                        pass
-                    else:
-                        self.modify(-1, _nick)
+                if len(clients) > 2 or sender in whitelist:
+                    if (self.g_ratelimiter.queue(sender)
+                        and self.r_ratelimiter.queue(_nick)
+                        and self.sr_ratelimiter.queue(sender + nick)):
+                        if sender in blacklist:
+                            self.modify(-1, sender)
+                            self.message("You've lost your downvoting privileges, {0}."
+                                .format(sender))
+                        elif _nick in fixed:
+                            pass
+                        else:
+                            self.modify(-1, _nick)
+                else:
+                    self.message("You are not on the whitelist for private messages.")
 
         imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.-]+)(\.jpg|\.png|\.jpeg|\.gif)\/?)", msg)
         for link in imageLinks:

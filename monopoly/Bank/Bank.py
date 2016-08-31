@@ -195,7 +195,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
                 elif private and s_user in whitelist:
                     modify(1, _nick)
                 elif private:
-                    message("This command is whitelisted for private messages.", channel)
+                    message("You are not on the whitelist for private messages.", channel)
             else:
                 if (g_ratelimiter.queue(s_user)
                     and r_ratelimiter.queue(s_user)
@@ -238,7 +238,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
                 elif private and s_user in whitelist:
                     modify(-1, _nick)
                 elif private:
-                    message("This command is whitelisted for private messages.", channel)
+                    message("You are not on the whitelist for private messages.", channel)
     modify_messages(channel)
 
     if re.search("!uptime", privmsg, re.IGNORECASE):
