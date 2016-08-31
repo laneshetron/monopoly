@@ -21,7 +21,8 @@
     "hangouts": {
         "enabled":false,
         "auth_token":"",
-	"tasker":false
+	"tasker":false,
+	"certfile":"config/cert.pem"
     },
     "db": {
         "location":"monopoly.db",
