@@ -129,3 +129,6 @@ class NaturalLanguage:
         safe_text = HANG_RE.sub(r'\1\1\1', s)
         words = WORD_RE.findall(safe_text)
         return words
+
+    def nl_join(self, s):
+        return ", ".join(s[:-2] + [" and ".join(s[-2:])])
