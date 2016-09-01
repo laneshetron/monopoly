@@ -3,6 +3,7 @@ import time
 import random
 import re
 from Bank import g
+from Bank.Trumpisms import NaturalLanguage as nl
 
 jakeisms = [
     "That guy died of ebola, I don't CARE anymore.",
@@ -44,6 +45,7 @@ def modify(amount, nick):
 
 def modify_messages(chnl):
     global modifications
+    results = {}
     for nick, amount in modifications.items():
         cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1",
             (nick,))
@@ -60,14 +62,46 @@ def modify_messages(chnl):
                 (nick, amount))
             db.commit()
             karma = amount
-
-        if amount == 1:
-            message("Gave karma to {0}  Total: {1}".format(nick, karma), chnl)
-        elif amount == -1:
-            message(":( {0}  Total: {1}".format(nick, karma), chnl)
-        else:
-            message("{0} karma to {1}  Total: {2}".format(amount, nick, karma), chnl)
+        results[nick] = (amount, karma)
     modifications = {}
+
+    if len(results) < 2:
+        for nick, (change, total) in results.items():
+            if change > 0:
+                change = " {0} ".format(change) if change > 1 else " "
+                message("Gave{0}karma to {1} : {2}".format(change, nick, total), chnl)
+            elif change < 0:
+                change = " {0} ".format(abs(change)) if change < -1 else " "
+                message("Took{0}karma from {1} : {2}".format(change, nick, total), chnl)
+            else:
+                message("I award you no points, and may God have mercy on your soul. {0} : {1}".format(nick, total), chnl)
+    else:
+        keys = sorted(results, key=results.get)
+        decrements = [x for x in keys if results[x][0] < 0]
+        increments = [x for x in keys if results[x][0] > -1]
+        if len(set([results[x][0] for x in increments])) < 2:
+            change = results[increments[0]][0]
+            change = " {0} ".format(change if change > 1 else " ")
+            nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
+            message("Gave{0}karma to {1}".format(change, nl.nl_join(nicks)), chnl)
+        else:
+            nicks = ["{0}{1}to {2} ({3})".format(
+                "" if results[x][0] < 2 and x == increments[0] else results[x][0],
+                " karma " if x == increments[0] else " ", x,
+                results[x][1]) for x in increments]
+            message("Gave {0}".format(nl.nl_join(nicks)), chnl)
+
+        if len(set([results[x][0] for x in decrements])) < 2:
+            change = results[decrements[0]][0]
+            change = " {0} ".format(abs(change) if change < -1 else " ")
+            nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
+            message("Took{0}karma from {1}".format(change, nl.nl_join(nicks)), chnl)
+        else:
+            nicks = ["{0}{1}from {2} ({3})".format(
+                "" if results[x][0] > -2 and x == decrements[0] else abs(results[x][0]),
+                " karma " if x == decrements[0] else " ", x,
+                results[x][1]) for x in decrements]
+            message("Took {0}".format(nl.nl_join(nicks)), chnl)
 
 def uptime(chnl):
     message("Monopoly has been running for: {0}".format(
