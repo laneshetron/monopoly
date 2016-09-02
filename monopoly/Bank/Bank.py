@@ -86,10 +86,17 @@ def modify_messages(chnl):
                 nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
                 message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)), chnl)
             else:
-                nicks = ["{0}{1}to {2} ({3})".format(
-                    "" if results[x][0] < 2 and x == increments[0] else results[x][0],
-                    " karma " if x == increments[0] else " ", x,
-                    results[x][1]) for x in increments]
+                nicks = []
+                for x in increments:
+                    substr = []
+                    if not (results[x][0] == 1 and x == increments[0]):
+                        substr.append(str(results[x][0]))
+                    if x == increments[0]:
+                        substr.append('karma')
+                    substr.append('to')
+                    substr.append(x)
+                    substr.append('({0})'.format(results[x][1]))
+                    nicks.append(' '.join(substr))
                 message("Gave {0}".format(nl().nl_join(nicks)), chnl)
 
         if len(decrements) > 0:
@@ -99,10 +106,17 @@ def modify_messages(chnl):
                 nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
                 message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)), chnl)
             else:
-                nicks = ["{0}{1}from {2} ({3})".format(
-                    "" if results[x][0] > -2 and x == decrements[0] else abs(results[x][0]),
-                    " karma " if x == decrements[0] else " ", x,
-                    results[x][1]) for x in decrements]
+                nicks = []
+                for x in decrements:
+                    substr = []
+                    if not (results[x][0] == -1 and x == decrements[0]):
+                        substr.append(str(abs(results[x][0])))
+                    if x == decrements[0]:
+                        substr.append('karma')
+                    substr.append('from')
+                    substr.append(x)
+                    substr.append('({0})'.format(results[x][1]))
+                    nicks.append(' '.join(substr))
                 message("Took {0}".format(nl().nl_join(nicks)), chnl)
 
 def uptime(chnl):
