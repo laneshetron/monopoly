@@ -6,6 +6,7 @@ import random
 import re
 from hangups import (ChatMessageSegment, hangouts_pb2)
 from Bank import g
+from Bank.Trumpisms import NaturalLanguage as nl
 
 jakeisms = [
     "That guy died of ebola, I don't CARE anymore.",
@@ -68,6 +69,7 @@ class Bank:
 
     def modify_messages(self):
         # TODO: Add change ratelimiting here
+        results = {}
         for nick, amount in self.modifications.items():
             self.cursor.execute(
                 "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
@@ -84,14 +86,62 @@ class Bank:
                     (nick, amount))
                 self.db.commit()
                 karma = amount
-
-            if amount == 1:
-                self.message("Gave karma to {0}  Total: {1}".format(nick, karma))
-            elif amount == -1:
-                self.message(":( {0}  Total: {1}".format(nick, karma))
-            else:
-                self.message("{0} karma to {1}  Total: {2}".format(amount, nick, karma))
+            results[nick] = (amount, karma)
         self.modifications = {}
+
+        if len(results) < 2:
+            for nick, (change, total) in results.items():
+                if change > 0:
+                    change = " {0} ".format(change) if change > 1 else " "
+                    self.message("Gave{0}karma to {1} ({2})".format(change, nick, total))
+                elif change < 0:
+                    change = " {0} ".format(abs(change)) if change < -1 else " "
+                    self.message("Took{0}karma from {1} ({2})".format(change, nick, total))
+                else:
+                    self.message("I award you no points, and may God have mercy on your soul. {0} ({1})".format(nick, total))
+        else:
+            keys = sorted(results, key=results.get)
+            decrements = [x for x in keys if results[x][0] < 0]
+            increments = [x for x in keys if results[x][0] > -1]
+            if len(increments) > 0:
+                if len(set([results[x][0] for x in increments])) < 2:
+                    change = results[increments[0]][0]
+                    change = " {0} ".format(change) if change > 1 else " "
+                    nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
+                    self.message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)))
+                else:
+                    nick = []
+                    for x in increments:
+                        substr = []
+                        if not (results[x][0] == 1 and x == increments[0]):
+                            substr.append(str(results[x][0]))
+                        if x == increments[0]:
+                            substr.append('karma')
+                        substr.append('to')
+                        substr.append(x)
+                        substr.append('({0})'.format(results[x][1]))
+                        nicks.append(' '.join(substr))
+                    self.message("Gave {0}".format(nl().nl_join(nicks)))
+
+            if len(decrements) > 0:
+                if len(set([results[x][0] for x in decrements])) < 2:
+                    change = results[decrements[0]][0]
+                    change = " {0} ".format(abs(change)) if change < -1 else " "
+                    nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
+                    self.message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)))
+                else:
+                    nicks = []
+                    for x in decrements:
+                        substr = []
+                        if not (results[x][0] == -1 and x == decrements[0]):
+                            substr.append(str(abs(results[x][0])))
+                        if x == decrements[0]:
+                            substr.append('karma')
+                        substr.append('from')
+                        substr.append(x)
+                        substr.append('({0})'.format(results[x][1]))
+                        nicks.append(' '.join(substr))
+                    self.message("Took {0}".format(nl().nl_join(nicks)))
 
     def punish(self, nick):
         self.cursor.execute(
