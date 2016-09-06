@@ -76,13 +76,12 @@ def modify_messages(chnl):
             else:
                 message("I award you no points, and may God have mercy on your soul. {0} ({1})".format(nick, total), chnl)
     else:
-        keys = sorted(results, key=results.get)
-        decrements = [x for x in keys if results[x][0] < 0]
-        increments = [x for x in keys if results[x][0] > -1]
+        decrements = [x for x in sorted(results, key=results.get, reverse=True) if results[x][0] < 0]
+        increments = [x for x in sorted(results, key=results.get) if results[x][0] > -1]
         if len(increments) > 0:
             if len(set([results[x][0] for x in increments])) < 2:
                 change = results[increments[0]][0]
-                change = " {0} ".format(change) if change > 1 else " "
+                change = " {0} ".format(change) if change != 1 else " "
                 nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
                 message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)), chnl)
             else:
@@ -102,7 +101,7 @@ def modify_messages(chnl):
         if len(decrements) > 0:
             if len(set([results[x][0] for x in decrements])) < 2:
                 change = results[decrements[0]][0]
-                change = " {0} ".format(abs(change)) if change < -1 else " "
+                change = " {0} ".format(abs(change)) if change != -1 else " "
                 nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
                 message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)), chnl)
             else:
