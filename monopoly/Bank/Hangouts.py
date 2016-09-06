@@ -101,16 +101,17 @@ class Bank:
                     self.message("I award you no points, and may God have mercy on your soul. {0} ({1})".format(nick, total))
         else:
             keys = sorted(results, key=results.get)
-            decrements = [x for x in keys if results[x][0] < 0]
-            increments = [x for x in keys if results[x][0] > -1]
+            decrements = [x for x in sorted(results, key=results.get, reverse=True)
+                          if results[x][0] < 0]
+            increments = [x for x in sorted(results, key=results.get) if results[x][0] > -1]
             if len(increments) > 0:
                 if len(set([results[x][0] for x in increments])) < 2:
                     change = results[increments[0]][0]
-                    change = " {0} ".format(change) if change > 1 else " "
+                    change = " {0} ".format(change) if change != 1 else " "
                     nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
                     self.message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)))
                 else:
-                    nick = []
+                    nicks = []
                     for x in increments:
                         substr = []
                         if not (results[x][0] == 1 and x == increments[0]):
@@ -126,7 +127,7 @@ class Bank:
             if len(decrements) > 0:
                 if len(set([results[x][0] for x in decrements])) < 2:
                     change = results[decrements[0]][0]
-                    change = " {0} ".format(abs(change)) if change < -1 else " "
+                    change = " {0} ".format(abs(change)) if change != 1 else " "
                     nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
                     self.message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)))
                 else:
