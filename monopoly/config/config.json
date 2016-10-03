@@ -3,6 +3,7 @@
         "enabled":false,
         "server":"irc.freenode.net",
         "port":6667,
+        "SSL":false,
         "password":"",
         "channels": ["#public", "#private"],
         "silent_channels": ["#foobar"],
@@ -20,7 +21,8 @@
     },
     "hangouts": {
         "enabled":false,
-        "auth_token":"",
+        "email":"",
+        "password":"",
 	"tasker":false,
 	"certfile":"config/cert.pem"
     },
