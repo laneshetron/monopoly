@@ -2,6 +2,8 @@ from Bank.Base import Base
 from Bank.Trumpisms import Trumpisms
 from hangups import (ChatMessageSegment, hangouts_pb2)
 import asyncio
+import random
+import re
 
 CONVERSATION_TYPE_ONE_TO_ONE = 1
 CONVERSATION_TYPE_GROUP = 2
