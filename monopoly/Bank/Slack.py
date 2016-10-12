@@ -17,7 +17,7 @@ class Bank(Base):
 
     def members(self, name):
         if name in self.channels:
-            return [id_to_name(id) for id in self.channels[name]['members']]
+            return [self.id_to_name(id) for id in self.channels[name]['members']]
 
     def receive(self, message):
         text = message['text']
