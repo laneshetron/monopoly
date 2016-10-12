@@ -8,16 +8,16 @@ class Bank(Base):
         for user in users:
             self.users[user['id']] = user
         for channel in channels:
-            self.channels[channel['name']] = channel
+            self.channels[channel['id']] = channel
         super().__init__()
 
     def id_to_name(self, id):
         if id in self.users:
             return self.users[id]['name']
 
-    def members(self, name):
-        if name in self.channels:
-            return [self.id_to_name(id) for id in self.channels[name]['members']]
+    def members(self, id):
+        if id in self.channels:
+            return [self.id_to_name(uid) for uid in self.channels[id]['members']]
 
     def receive(self, message):
         text = message['text']
