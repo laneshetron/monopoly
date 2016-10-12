@@ -26,6 +26,10 @@
 	"tasker":false,
 	"certfile":"config/cert.pem"
     },
+    "slack": {
+        "enabled":false,
+        "api-token":""
+    },
     "db": {
         "location":"monopoly.db",
         "user":"",
