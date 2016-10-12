@@ -149,7 +149,7 @@ class Base:
             self.message("Global Monopoly karma totals:")
         else:
             if len(clients) > 0:
-                self.message("Monopoly karma totals for Hangouts:")
+                self.message("Monopoly karma totals for this channel:")
                 limit = "WHERE "
                 for uname in clients:
                     limit += "nick = '%s'" % uname
