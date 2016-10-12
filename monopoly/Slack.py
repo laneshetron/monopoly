@@ -7,7 +7,7 @@ import json
 domain = 'https://slack.com'
 endpoint = 'api/rtm.start'
 
-token = ''
+token = g.config['slack']['api-token']
 
 url = '{0}/{1}?token={2}&simple_latest=true&no_unreads=true'.format(domain, endpoint, token)
 
@@ -53,9 +53,9 @@ class SlackClient:
                 res = requests.get(url).json()
                 if 'url' in res:
                     self.ws = websocket.WebSocketApp(res['url'], on_message=self.on_message,
-                                                            on_error=self.on_error,
-                                                            on_open=self.on_open,
-                                                            on_close=self.on_close)
+                                                                 on_error=self.on_error,
+                                                                 on_open=self.on_open,
+                                                                 on_close=self.on_close)
                     self.ws.run_forever()
                 else:
                     # connection error
