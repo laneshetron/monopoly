@@ -1,3 +1,4 @@
+from Bank.Slack import Bank
 from Bank import g
 import websocket
 import requests
@@ -15,6 +16,7 @@ class SlackClient:
     def __init__(self):
         self.up = False
         self.ws = None
+        self.bank = None
 
     def send(self, text, channel):
         if self.ws:
@@ -34,10 +36,13 @@ class SlackClient:
             elif message['type'] == 'message' and 'reply_to' not in message:
                 # Consume message
                 print(message['text'])
+                buffer = self.bank.receive(message)
+                for msg in buffer:
+                    self.send(msg[0], message['channel'])
 
     def on_error(self, ws, error):
         print(error)
-        self.connect()
+        ws.close()
 
     def on_close(self, ws):
         print('Connection to Slack closed. Reopening...')
@@ -51,6 +56,7 @@ class SlackClient:
         while not self.up:
             try:
                 res = requests.get(url).json()
+                self.bank = Bank(res['users'], res['channels'])
                 if 'url' in res:
                     self.ws = websocket.WebSocketApp(res['url'], on_message=self.on_message,
                                                                  on_error=self.on_error,

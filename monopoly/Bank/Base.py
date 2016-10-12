@@ -21,11 +21,9 @@ whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
 
 class Base:
-    def __init__(self, swift, donald):
+    def __init__(self):
         self.db = g.db
         self.cursor = g.cursor
-        self.swift = swift
-        self.donald = donald
         self.messageBuffer = []
         self.rand_jakeisms = []
         self.modifications = {}
@@ -285,16 +283,6 @@ class Base:
         elif re.search("ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
                 g.ding += 1
-
-        # Avoid outputting twice
-        if re.search("trumpism", msg, re.IGNORECASE):
-            if self.g_ratelimiter.queue(sender):
-                self.message("<i>{0}</i>".format(self.donald.trumpism()))
-        else:
-            # TODO should ratelimit
-            provoked = self.donald.provoke(msg)
-            if provoked:
-                self.message("<i>{0}</i>".format(provoked))
 
         return self.flush()
 
