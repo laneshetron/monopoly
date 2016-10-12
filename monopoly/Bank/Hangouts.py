@@ -1,4 +1,5 @@
 from Bank.Base import Base
+from Bank.Trumpisms import Trumpisms
 from hangups import (ChatMessageSegment, hangouts_pb2)
 import asyncio
 
@@ -23,10 +24,12 @@ def name_to_nick(name):
         return None
 
 class Bank(Base):
-    def __init__(self, client, conv_list, swift, donald):
+    def __init__(self, client, conv_list, swift):
         self.client = client
         self.conv_list = conv_list
-        super().__init__(swift, donald)
+        self.swift = swift
+        self.donald = Trumpisms()
+        super().__init__()
 
     @asyncio.coroutine
     def receive(self, msg, conv, user):
@@ -98,6 +101,16 @@ class Bank(Base):
             else:
                 self.message("<b>{0}</b> is not currently subscribed to receive alerts."
                     .format(user.full_name))
+
+        # Avoid outputting twice
+        if re.search("trumpism", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                self.message("<i>{0}</i>".format(self.donald.trumpism()))
+        else:
+            # TODO should ratelimit
+            provoked = self.donald.provoke(msg)
+            if provoked:
+                self.message("<i>{0}</i>".format(provoked))
 
         buffer = super().receive(msg, sender, clients)
         self.send(buffer, conv)
