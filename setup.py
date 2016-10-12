@@ -13,7 +13,7 @@ setup(name='monopoly',
       author_email='laneshetron@gmail.com',
       license='MIT',
       packages=['monopoly'],
-      install_requires=['hangups', 'fuzzywuzzy', 'python-Levenshtein'],
+      install_requires=['hangups', 'websocket-client', 'fuzzywuzzy', 'python-Levenshtein'],
       include_package_data=True,
       zip_safe=False)
 
