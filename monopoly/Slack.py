@@ -58,8 +58,8 @@ class SlackClient:
         while not self.up:
             try:
                 res = requests.get(url).json()
-                self.bank = Bank(res['users'], res['channels'])
                 if 'url' in res:
+                    self.bank = Bank(res)
                     self.ws = websocket.WebSocketApp(res['url'], on_message=self.on_message,
                                                                  on_error=self.on_error,
                                                                  on_open=self.on_open,
