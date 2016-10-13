@@ -1,14 +1,19 @@
 from Bank.Base import Base
 
 class Bank(Base):
-    def __init__(self, users, channels):
+    def __init__(self, team):
         self.users = {}
         self.channels = {}
 
-        for user in users:
-            self.users[user['id']] = user
-        for channel in channels:
-            self.channels[channel['id']] = channel
+        if 'users' in team:
+            for user in team['users']:
+                self.users[user['id']] = user
+        if 'channels' in team:
+            for channel in team['channels']:
+                self.channels[channel['id']] = channel
+        if 'groups' in team:
+            for group in team['groups']:
+                self.channels[group['id']] = group
         super().__init__()
 
     def set_channel(self, channel):
