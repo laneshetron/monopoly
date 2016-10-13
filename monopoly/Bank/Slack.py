@@ -1,4 +1,5 @@
 from Bank.Base import Base
+import re
 
 class Bank(Base):
     def __init__(self, team):
@@ -38,7 +39,13 @@ class Bank(Base):
                 message['user'] in self.channels[message['channel']]['members']):
                 self.channels[message['channel']]['members'].remove(message['user'])
 
+        # Replace Slack @ mentions with uname before proceeding
         text = message['text']
+        re_mentions = re.compile("<@([0-9a-zA-Z]+)\|?(?:[0-9a-zA-Z]+)?>")
+        for mention in re.findall(re_mentions, text):
+            name = self.id_to_name(mention[0])
+            text = re.sub(re_mentions, name, text)
+
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
         return super().receive(text, sender, clients)
