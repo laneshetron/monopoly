@@ -23,6 +23,7 @@ class Bank(Base):
     def id_to_name(self, id):
         if id in self.users:
             return self.users[id]['name']
+        return id
 
     def members(self, id):
         if id in self.channels and 'members' in self.channels[id]:
@@ -43,7 +44,7 @@ class Bank(Base):
         text = message['text']
         re_mentions = re.compile("<@([0-9a-zA-Z]+)\|?(?:[0-9a-zA-Z]+)?>")
         for mention in re.findall(re_mentions, text):
-            name = self.id_to_name(mention[0])
+            name = self.id_to_name(mention)
             text = re.sub(re_mentions, name, text)
 
         sender = self.id_to_name(message['user'])
