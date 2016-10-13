@@ -213,7 +213,7 @@ class Base:
                 if len(clients) > 2 or sender in whitelist:
                     if (self.g_ratelimiter.queue(sender)
                         and self.r_ratelimiter.queue(_nick)
-                        and self.sr_ratelimiter.queue(sender + nick)):
+                        and self.sr_ratelimiter.queue(sender + _nick)):
                         if sender in blacklist:
                             self.modify(-1, sender)
                             self.message("You've lost your downvoting privileges, {0}."

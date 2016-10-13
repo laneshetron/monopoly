@@ -47,6 +47,9 @@ class Bank(Base):
             name = self.id_to_name(mention)
             text = re.sub(re_mentions, name, text)
 
+        # Replace — (emdash) with --
+        text = re.sub("—", "--", text)
+
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
         return super().receive(text, sender, clients)
