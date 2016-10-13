@@ -21,14 +21,15 @@ class Bank(Base):
     def members(self, id):
         if id in self.channels and 'members' in self.channels[id]:
             return [self.id_to_name(uid) for uid in self.channels[id]['members']]
+        return []
 
     def receive(self, message):
         # Handle members joining & leaving
         if 'subtype' in message:
-            if (message['subtype'] == 'channel_join' and
+            if (message['subtype'] in ['channel_join', 'group_join'] and
                 message['user'] not in self.channels[message['channel']]['members']):
                 self.channels[message['channel']]['members'].append(message['user'])
-            if (message['subtype'] == 'channel_leave' and
+            if (message['subtype'] in ['channel_leave', 'group_leave'] and
                 message['user'] in self.channels[message['channel']]['members']):
                 self.channels[message['channel']]['members'].remove(message['user'])
 
