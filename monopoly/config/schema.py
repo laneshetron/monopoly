@@ -40,6 +40,15 @@ def load_schema(db, cursor):
         index_on_trumpisms ON trumpisms_index (word, count);
 
     CREATE TABLE IF NOT EXISTS
+        analytics(sid INTEGER NOT NULL,
+                  rid INTEGER NOT NULL,
+                  positive INTEGER,
+                  negative INTEGER,
+                  FOREIGN KEY (sid) REFERENCES monopoly(id),
+                  FOREIGN KEY (rid) REFERENCES monopoly(id),
+                  PRIMARY KEY (sid, rid));
+
+    CREATE TABLE IF NOT EXISTS
         schema_migrations(version INTEGER PRIMARY KEY);
     ''')
     db.commit()
