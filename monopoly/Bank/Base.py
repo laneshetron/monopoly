@@ -20,6 +20,46 @@ blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
 
+class Nick:
+    def __init__(self, nick):
+        self._nick = nick
+        self._id = None
+        self._karma = None
+        self._get()
+
+    def _get(self):
+        self.cursor.execute(
+            "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (self.nick,))
+        data = self.cursor.fetchone()
+        if data is not None:
+            self._id, self._nick, self._karma = data
+        else:
+            self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
+                (self.nick, 0))
+            self.db.commit()
+
+            self._id = self.cursor.lastrowid
+            self._karma = 0
+
+    def set_karma(self, amount):
+        self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
+            (amount, self.id))
+        self.db.commit()
+        self._karma = amount
+
+    # Ensure properties cannot be set manually
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def nick(self):
+        return self._nick
+
+    @property
+    def karma(self):
+        return self._karma
+
 class Base:
     def __init__(self):
         self.db = g.db
@@ -35,23 +75,23 @@ class Base:
     def message(self, msg, fname=None):
         self.messageBuffer.append([msg, fname])
 
-    def modify(self, amount, nick):
+    def modify(self, amount, nick, sender):
         if nick in self.modifications:
-            self.modifications[nick] += amount
+            self.modifications[nick][0] += amount
         else:
-            self.modifications[nick] = amount
+            self.modifications[nick] = [amount, sender]
 
     def modify_messages(self):
         # TODO: Add change ratelimiting here
         results = {}
-        for nick, amount in self.modifications.items():
+        for nick, (amount, sender) in self.modifications.items():
             self.cursor.execute(
                 "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-            data = self.cursor.fetchall()
-            if len(data) > 0:
-                karma = data[0][2] + amount
-                nick = data[0][1]
-                id = data[0][0]
+            data = self.cursor.fetchone()
+            if data is not None:
+                karma = data[2] + amount
+                nick = data[1]
+                id = data[0]
                 self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
                                 (karma, id))
                 self.db.commit()
@@ -60,6 +100,13 @@ class Base:
                     (nick, amount))
                 self.db.commit()
                 karma = amount
+            # Update analytics
+            #self.cursor.execute(
+            #    "SELECT * FROM analytics WHERE sid = ? AND rid = ? COLLATE NOCASE LIMIT 1",
+            #    (,data[0])
+            #)
+            #data = self.cursor.fetchone()
+
             results[nick] = (amount, karma)
         self.modifications = {}
 
@@ -185,7 +232,7 @@ class Base:
                 delta = None
 
             if delta is not None and sender in whitelist:
-                self.modify(delta, _nick)
+                self.modify(delta, _nick, sender)
             else:
                 if _nick.lower() != sender:
                     if sender not in blacklist and _nick not in fixed:
@@ -193,7 +240,7 @@ class Base:
                             if (self.g_ratelimiter.queue(sender)
                                 and self.r_ratelimiter.queue(_nick)
                                 and self.sr_ratelimiter.queue(sender + _nick)):
-                                self.modify(1, _nick)
+                                self.modify(1, _nick, sender)
                         else:
                             self.message("You are not on the whitelist for private messages.")
                 else:
@@ -208,20 +255,20 @@ class Base:
                 delta = None
 
             if delta is not None and sender in whitelist:
-                self.modify(delta, _nick)
+                self.modify(delta, _nick, sender)
             else:
                 if len(clients) > 2 or sender in whitelist:
                     if (self.g_ratelimiter.queue(sender)
                         and self.r_ratelimiter.queue(_nick)
                         and self.sr_ratelimiter.queue(sender + _nick)):
                         if sender in blacklist:
-                            self.modify(-1, sender)
+                            self.modify(-1, sender, 'monopoly')
                             self.message("You've lost your downvoting privileges, {0}."
                                 .format(sender))
                         elif _nick in fixed:
                             pass
                         else:
-                            self.modify(-1, _nick)
+                            self.modify(-1, _nick, sender)
                 else:
                     self.message("You are not on the whitelist for private messages.")
 
