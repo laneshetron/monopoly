@@ -37,7 +37,7 @@ class Bank(Base):
             return [self.id_to_name(uid) for uid in self.channels[id]['members']]
         elif id in self.channels and 'user' in self.channels[id]:
             if self.me:
-                return [self.id_to_name(uid) for uid in [self.channels[id]['user'], self.me.id]]
+                return [self.id_to_name(uid) for uid in [self.channels[id]['user'], self.me['id']]]
             else:
                 # pedantic fallback
                 return [self.id_to_name(self.channels[id]['user'])]
