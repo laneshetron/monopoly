@@ -4,6 +4,7 @@ import urllib.request
 import random
 import re
 from Bank import g
+from Bank.ORM import *
 from Bank.Trumpisms import NaturalLanguage as nl
 
 jakeisms = [
@@ -19,46 +20,6 @@ jakeisms = [
 blacklist = g.config['irc']['blacklist']
 whitelist = g.config['irc']['whitelist']
 fixed = g.config['irc']['fixed']
-
-class Nick:
-    def __init__(self, nick):
-        self._nick = nick
-        self._id = None
-        self._karma = None
-        self._get()
-
-    def _get(self):
-        self.cursor.execute(
-            "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (self.nick,))
-        data = self.cursor.fetchone()
-        if data is not None:
-            self._id, self._nick, self._karma = data
-        else:
-            self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
-                (self.nick, 0))
-            self.db.commit()
-
-            self._id = self.cursor.lastrowid
-            self._karma = 0
-
-    def set_karma(self, amount):
-        self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-            (amount, self.id))
-        self.db.commit()
-        self._karma = amount
-
-    # Ensure properties cannot be set manually
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def nick(self):
-        return self._nick
-
-    @property
-    def karma(self):
-        return self._karma
 
 class Base:
     def __init__(self):
@@ -82,32 +43,12 @@ class Base:
             self.modifications[nick] = [amount, sender]
 
     def modify_messages(self):
-        # TODO: Add change ratelimiting here
         results = {}
         for nick, (amount, sender) in self.modifications.items():
-            self.cursor.execute(
-                "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-            data = self.cursor.fetchone()
-            if data is not None:
-                karma = data[2] + amount
-                nick = data[1]
-                id = data[0]
-                self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                                (karma, id))
-                self.db.commit()
-            else:
-                self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
-                    (nick, amount))
-                self.db.commit()
-                karma = amount
-            # Update analytics
-            #self.cursor.execute(
-            #    "SELECT * FROM analytics WHERE sid = ? AND rid = ? COLLATE NOCASE LIMIT 1",
-            #    (,data[0])
-            #)
-            #data = self.cursor.fetchone()
+            transaction = Transaction(sender, nick)
+            transaction.transact(amount)
 
-            results[nick] = (amount, karma)
+            results[nick] = (amount, transaction.receiver.karma)
         self.modifications = {}
 
         if len(results) < 2:
@@ -166,22 +107,10 @@ class Base:
                     self.message("Took {0}".format(nl().nl_join(nicks)))
 
     def punish(self, nick):
-        self.cursor.execute(
-            "SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-        data = self.cursor.fetchall()
-        if len(data) > 0:
-            karma = data[0][2] - 3
-            nick = data[0][1]
-            id = data[0][0]
-            self.cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                            (karma, id))
-            self.db.commit()
-        else:
-            self.cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, -3)", (nick,))
-            self.db.commit()
-            karma = -3
+        transaction = Transaction('monopoly', nick)
+        transaction.transact(-3)
 
-        self.message("Punished {0}!! >:(  Total: {1}".format(nick, karma))
+        self.message("Punished {0}!! >:(  Total: {1}".format(nick, transaction.receiver.karma))
 
     def karma(self, clients, nick=None, all=False):
         clients = list(set(clients))
@@ -330,6 +259,39 @@ class Base:
         elif re.search("ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
                 g.ding += 1
+
+        # Karma analytics
+        if re.search("!givers", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                analytics = Analytics(clients)
+                message = "Monopoly's Most Generous\n"
+                for nick, ratio in analytics.top_givers:
+                    message += "{0}: {1}% positive\n".format(nick, ratio)
+                self.message(message)
+
+        elif re.search("!takers", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                analytics = Analytics(clients)
+                message = "Monopoly's Most Pessimistic\n"
+                for nick, ratio in analytics.top_takers:
+                    message += "{0}: {1}% negative\n".format(nick, ratio)
+                self.message(message)
+
+        elif re.search("!loved", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                analytics = Analytics(clients)
+                message = "Monopoly's Most Loved ❤\n"
+                for nick, ratio in analytics.top_loved:
+                    message += "{0}: {1}% positive\n".format(nick, ratio)
+                self.message(message)
+
+        elif re.search("!hated", msg, re.IGNORECASE):
+            if self.g_ratelimiter.queue(sender):
+                analytics = Analytics(clients)
+                message = "Monopoly's Les Deplorables\n"
+                for nick, ratio in analytics.top_hated:
+                    message += "{0}: {1}% negative\n".format(nick, ratio)
+                self.message(message)
 
         return self.flush()
 

@@ -3,6 +3,7 @@ import time
 import random
 import re
 from Bank import g
+from Bank.ORM import *
 from Bank.Trumpisms import NaturalLanguage as nl
 
 jakeisms = [
@@ -37,32 +38,20 @@ def action(msg, chnl):
     if chnl not in g.silent_channels:
         ircsock.send("PRIVMSG {0} :\x01ACTION {1}\x01\r\n".format(chnl, msg))
 
-def modify(amount, nick):
+def modify(amount, sender, nick):
     if nick in modifications:
-        modifications[nick] += amount
+        modifications[nick][0] += amount
     else:
-        modifications[nick] = amount
+        modifications[nick] = [amount, sender]
 
 def modify_messages(chnl):
     global modifications
     results = {}
-    for nick, amount in modifications.items():
-        cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1",
-            (nick,))
-        data = cursor.fetchall()
-        if len(data) > 0:
-            karma = data[0][2] + amount
-            nick = data[0][1]
-            id = data[0][0]
-            cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                            (karma, id))
-            db.commit()
-        else:
-            cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, ?)",
-                (nick, amount))
-            db.commit()
-            karma = amount
-        results[nick] = (amount, karma)
+    for nick, (amount, sender) in modifications.items():
+        transaction = Transaction(sender, nick)
+        transaction.transact(amount)
+
+        results[nick] = (amount, transaction.receiver.karma)
     modifications = {}
 
     if len(results) < 2:
@@ -126,19 +115,8 @@ def uptime(chnl):
             str(timedelta(seconds=g.uptime.elapsedDisconnect))), chnl)
 
 def punish(nick):
-    cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
-    data = cursor.fetchall()
-    if len(data) > 0:
-        karma = data[0][2] - 3
-        nick = data[0][1]
-        id = data[0][0]
-        cursor.execute("UPDATE monopoly SET karma = ? WHERE id = ?",
-                        (karma, id))
-        db.commit()
-    else:
-        cursor.execute("INSERT INTO monopoly(nick, karma) VALUES(?, -3)", (nick,))
-        db.commit()
-        karma = -3
+    transaction = Transaction('monopoly', nick)
+    transaction.transact(-3)
 
     message("Punished {0}!! >:(  Total: {1}".format(nick, karma), channel)
 
@@ -229,20 +207,20 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, _nick)
+            modify(delta, s_user, _nick)
         else:
             if _nick.lower() != s_user:
                 if not private and _nick not in fixed:
                     if (g_ratelimiter.queue(s_user)
                         and r_ratelimiter.queue(_nick)
                         and sr_ratelimiter.queue(s_user + _nick)):
-                        modify(1, _nick)
+                        modify(1, s_user, _nick)
                     elif (g_ratelimiter.dropped(s_user) == 1
                         or r_ratelimiter.dropped(_nick) == 1
                         or sr_ratelimiter.dropped(s_user + _nick) == 1):
                         message("http://i.imgur.com/v79Hl19.jpg", channel)
                 elif private and s_user in whitelist:
-                    modify(1, _nick)
+                    modify(1, s_user, _nick)
                 elif private:
                     message("You are not on the whitelist for private messages.", channel)
             else:
@@ -264,12 +242,12 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, _nick)
+            modify(delta, s_user, _nick)
         else:
             if s_user in blacklist:
                 if (g_ratelimiter.queue(s_user)
                     and sr_ratelimiter.queue(s_user + s_user)):
-                    modify(-1, s_user)
+                    modify(-1, 'monopoly', s_user)
                     message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
                 elif (g_ratelimiter.dropped(s_user) == 1
                     or sr_ratelimiter.dropped(s_user + s_user) == 1):
@@ -279,13 +257,13 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
                     if (g_ratelimiter.queue(s_user)
                         and r_ratelimiter.queue(_nick)
                         and sr_ratelimiter.queue(s_user + _nick)):
-                        modify(-1, _nick)
+                        modify(-1, s_user, _nick)
                     elif (g_ratelimiter.dropped(s_user) == 1
                         or r_ratelimiter.dropped(_nick) == 1
                         or sr_ratelimiter.dropped(s_user + _nick) == 1):
                         message("http://i.imgur.com/v79Hl19.jpg", channel)
                 elif private and s_user in whitelist:
-                    modify(-1, _nick)
+                    modify(-1, s_user, _nick)
                 elif private:
                     message("You are not on the whitelist for private messages.", channel)
     modify_messages(channel)
