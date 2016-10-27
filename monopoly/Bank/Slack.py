@@ -5,6 +5,7 @@ class Bank(Base):
     def __init__(self, team):
         self.users = {}
         self.channels = {}
+        self.me = {}
 
         if 'users' in team:
             for user in team['users']:
@@ -15,6 +16,12 @@ class Bank(Base):
         if 'groups' in team:
             for group in team['groups']:
                 self.channels[group['id']] = group
+        if 'ims' in team:
+            for im in team['ims']:
+                self.channels[im['id']] = im
+        if 'self' in team:
+            self.me = team['self']
+
         super().__init__()
 
     def set_channel(self, channel):
@@ -28,6 +35,12 @@ class Bank(Base):
     def members(self, id):
         if id in self.channels and 'members' in self.channels[id]:
             return [self.id_to_name(uid) for uid in self.channels[id]['members']]
+        elif id in self.channels and 'user' in self.channels[id]:
+            if self.me:
+                return [self.id_to_name(uid) for uid in [self.channels[id]['user'], self.me.id]]
+            else:
+                # pedantic fallback
+                return [self.id_to_name(self.channels[id]['user'])]
         return []
 
     def receive(self, message):

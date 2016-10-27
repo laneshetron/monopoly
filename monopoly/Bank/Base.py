@@ -286,8 +286,8 @@ class Base:
                 self.message(message)
 
         elif re.search("!hated", msg, re.IGNORECASE):
-            if self.g_ratelimiter.queue(sender, limit=10):
-                analytics = Analytics(clients)
+            if self.g_ratelimiter.queue(sender):
+                analytics = Analytics(clients, limit=10)
                 message = "Monopoly's Les Deplorables\n"
                 for nick, ratio in analytics.top_hated:
                     message += "{0}: {1}% negative\n".format(nick, ratio)

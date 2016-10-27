@@ -33,7 +33,7 @@ class SlackClient:
                 self.up = True
             elif message['type'] == 'error':
                 print('Error encountered: {1}'.format(message['error']))
-            elif message['type'] in ['channel_joined', 'group_joined']:
+            elif message['type'] in ['channel_joined', 'group_joined', 'im_created']:
                 self.bank.set_channel(message['channel'])
             elif message['type'] == 'message' and 'reply_to' not in message:
                 # Consume message
