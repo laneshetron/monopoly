@@ -161,7 +161,7 @@ class Base:
                 delta = None
 
             if delta is not None and sender in whitelist:
-                self.modify(delta, _nick, sender)
+                self.modify(delta, _nick, 'monopoly')
             else:
                 if _nick.lower() != sender:
                     if sender not in blacklist and _nick not in fixed:
@@ -184,7 +184,7 @@ class Base:
                 delta = None
 
             if delta is not None and sender in whitelist:
-                self.modify(delta, _nick, sender)
+                self.modify(delta, _nick, 'monopoly')
             else:
                 if len(clients) > 2 or sender in whitelist:
                     if (self.g_ratelimiter.queue(sender)
