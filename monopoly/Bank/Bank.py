@@ -207,7 +207,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, s_user, _nick)
+            modify(delta, 'monopoly', _nick)
         else:
             if _nick.lower() != s_user:
                 if not private and _nick not in fixed:
@@ -242,7 +242,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
             delta = None
 
         if delta is not None and s_user in whitelist:
-            modify(delta, s_user, _nick)
+            modify(delta, 'monopoly', _nick)
         else:
             if s_user in blacklist:
                 if (g_ratelimiter.queue(s_user)
