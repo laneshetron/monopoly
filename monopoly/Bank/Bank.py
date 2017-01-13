@@ -177,7 +177,8 @@ def ding_reset():
 def trumpism():
     message(donald.trumpism(), channel)
 
-def analytics(option):
+def analytics(option, clients):
+    clients = list(set(clients))
     a = Analytics(clients, limit=10)
     if option in ['givers', 'loved']:
         qualifier = 'positive'
@@ -378,10 +379,10 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
 
     # Karma analytics
     if re.search("!givers", msg, re.IGNORECASE):
-        ratelimit_command(analytics, 'givers')
+        ratelimit_command(analytics, 'givers', clients)
     elif re.search("!takers", msg, re.IGNORECASE):
-        ratelimit_command(analytics, 'takers')
+        ratelimit_command(analytics, 'takers', clients)
     elif re.search("!loved", msg, re.IGNORECASE):
-        ratelimit_command(analytics, 'loved')
+        ratelimit_command(analytics, 'loved', clients)
     elif re.search("!hated", msg, re.IGNORECASE):
-        ratelimit_command(analytics, 'hated')
+        ratelimit_command(analytics, 'hated', clients)
