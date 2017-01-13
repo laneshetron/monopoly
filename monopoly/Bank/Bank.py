@@ -343,10 +343,11 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     # Avoid outputting twice
     if re.search("trumpism", privmsg, re.IGNORECASE):
         ratelimit_command(trumpism)
-    else:
-        # This won't be necessary once it's fixed in Channel.py
-        # TODO should probably ratelimit this
-        _privmsg = ' '.join(privmsg.rsplit()[1:])[1:].lower()
-        provoked = donald.provoke(_privmsg)
-        if provoked:
-            message(provoked, channel)
+    # Trumpisms currently disabled
+    #else:
+    #    # This won't be necessary once it's fixed in Channel.py
+    #    # TODO should probably ratelimit this
+    #    _privmsg = ' '.join(privmsg.rsplit()[1:])[1:].lower()
+    #    provoked = donald.provoke(_privmsg)
+    #    if provoked:
+    #        message(provoked, channel)
