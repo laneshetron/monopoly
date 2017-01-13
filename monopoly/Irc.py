@@ -92,8 +92,6 @@ def main(uptime, queues, **kwargs):
             continue
 
         for msg in data.splitlines():
-            print(msg)
-
             if msg.find(":Welcome to the Arbor IRC") != -1:
                 sub = msg.find(":Welcome to the Arbor IRC")
                 global channels
