@@ -104,15 +104,11 @@ class Bank(Base):
                 self.message("<b>{0}</b> is not currently subscribed to receive alerts."
                     .format(user.full_name))
 
-        # Avoid outputting twice
+        # XXX This should be moved to Base.py but we need a way to map text formatting between
+        # different integrations
         if re.search("trumpism", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
                 self.message("<i>{0}</i>".format(self.donald.trumpism()))
-        else:
-            # TODO should ratelimit
-            provoked = self.donald.provoke(msg)
-            if provoked:
-                self.message("<i>{0}</i>".format(provoked))
 
         buffer = super().receive(msg, sender, clients)
         self.send(buffer, conv)
