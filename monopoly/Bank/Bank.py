@@ -177,6 +177,30 @@ def ding_reset():
 def trumpism():
     message(donald.trumpism(), channel)
 
+def analytics(option):
+    a = Analytics(clients, limit=10)
+    if option in ['givers', 'loved']:
+        qualifier = 'positive'
+    else:
+        qualifier = 'negative'
+
+    if option == 'givers':
+        message("Monopoly's Most Generous", channel)
+        for nick, ratio in a.top_givers:
+            message("{0}: {1}% {2}".format(nick, ratio, qualifier), channel)
+    elif option == 'takers':
+        message("Monopoly's Most Pessimistic", channel)
+        for nick, ratio in a.top_takers:
+            message("{0}: {1}% {2}".format(nick, ratio, qualifier), channel)
+    elif option == 'loved':
+        message("Monopoly's Most Loved ❤", channel)
+        for nick, ratio in a.top_loved:
+            message("{0}: {1}% {2}".format(nick, ratio, qualifier), channel)
+    elif option == 'hated':
+        message("Monopoly's Les Deplorables", channel)
+        for nick, ratio in a.top_hated:
+            message("{0}: {1}% {2}".format(nick, ratio, qualifier), channel)
+
 def ratelimit_command(command, *args):
     if ((private and g_ratelimiter.queue('global') and g_ratelimiter.queue(s_user))
         or (not private and g_ratelimiter.queue(s_user))):
@@ -354,29 +378,10 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
 
     # Karma analytics
     if re.search("!givers", msg, re.IGNORECASE):
-        analytics = Analytics(clients, limit=10)
-        res = "Monopoly's Most Generous\n"
-        for nick, ratio in analytics.top_givers:
-            res += "{0}: {1}% positive\n".format(nick, ratio)
-        ratelimit_command(message, res, channel)
-
+        ratelimit_command(analytics, 'givers')
     elif re.search("!takers", msg, re.IGNORECASE):
-       analytics = Analytics(clients, limit=10)
-       res = "Monopoly's Most Pessimistic\n"
-       for nick, ratio in analytics.top_takers:
-           res += "{0}: {1}% negative\n".format(nick, ratio)
-       ratelimit_command(message, res, channel)
-
+        ratelimit_command(analytics, 'takers')
     elif re.search("!loved", msg, re.IGNORECASE):
-       analytics = Analytics(clients, limit=10)
-       res = "Monopoly's Most Loved ❤\n"
-       for nick, ratio in analytics.top_loved:
-           res += "{0}: {1}% positive\n".format(nick, ratio)
-       ratelimit_command(message, res, channel)
-
+        ratelimit_command(analytics, 'loved')
     elif re.search("!hated", msg, re.IGNORECASE):
-       analytics = Analytics(clients, limit=10)
-       res = "Monopoly's Les Deplorables\n"
-       for nick, ratio in analytics.top_hated:
-           res += "{0}: {1}% negative\n".format(nick, ratio)
-       ratelimit_command(message, res, channel)
+        ratelimit_command(analytics, 'hated')
