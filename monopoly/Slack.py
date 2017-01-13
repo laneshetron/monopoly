@@ -27,7 +27,8 @@ class SlackClient:
 
     def on_message(self, ws, message):
         message = json.loads(message)
-        print(message)
+        # TODO this should be restored with DEBUG log level
+        #print(message)
         if 'type' in message:
             if message['type'] == 'hello':
                 self.up = True
