@@ -351,3 +351,36 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     #    provoked = donald.provoke(_privmsg)
     #    if provoked:
     #        message(provoked, channel)
+
+    # Karma analytics
+    if re.search("!givers", msg, re.IGNORECASE):
+        if self.g_ratelimiter.queue(sender):
+            analytics = Analytics(clients, limit=10)
+            message = "Monopoly's Most Generous\n"
+            for nick, ratio in analytics.top_givers:
+                message += "{0}: {1}% positive\n".format(nick, ratio)
+            self.message(message)
+
+    elif re.search("!takers", msg, re.IGNORECASE):
+        if self.g_ratelimiter.queue(sender):
+            analytics = Analytics(clients, limit=10)
+            message = "Monopoly's Most Pessimistic\n"
+            for nick, ratio in analytics.top_takers:
+                message += "{0}: {1}% negative\n".format(nick, ratio)
+            self.message(message)
+
+    elif re.search("!loved", msg, re.IGNORECASE):
+        if self.g_ratelimiter.queue(sender):
+            analytics = Analytics(clients, limit=10)
+            message = "Monopoly's Most Loved ❤\n"
+            for nick, ratio in analytics.top_loved:
+                message += "{0}: {1}% positive\n".format(nick, ratio)
+            self.message(message)
+
+    elif re.search("!hated", msg, re.IGNORECASE):
+        if self.g_ratelimiter.queue(sender):
+            analytics = Analytics(clients, limit=10)
+            message = "Monopoly's Les Deplorables\n"
+            for nick, ratio in analytics.top_hated:
+                message += "{0}: {1}% negative\n".format(nick, ratio)
+            self.message(message)
