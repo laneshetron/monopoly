@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='monopoly',
-      version='0.2.0',
+      version='0.1.0',
       description='A karma bot for Hangouts and IRC.',
       long_description=readme(),
       url='https://github.com/laneshetron/monopoly.git',
@@ -13,7 +13,8 @@ setup(name='monopoly',
       author_email='laneshetron@gmail.com',
       license='MIT',
       packages=['monopoly'],
-      install_requires=['hangups', 'websocket-client', 'fuzzywuzzy', 'python-Levenshtein'],
+      install_requires=['hangups==0.1.0-monopoly', 'websocket-client', 'fuzzywuzzy', 'python-Levenshtein'],
+      dependency_links=['https://github.com/laneshetron/hangups/archive/v0.1.0-monopoly.zip#egg=hangups-0.1.0-monopoly'],
       include_package_data=True,
       zip_safe=False)
 
