@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='monopoly',
-      version='0.1.0',
+      version='0.1.1',
       description='A karma bot for Hangouts, Slack, and IRC.',
       long_description=readme(),
       url='https://github.com/laneshetron/monopoly.git',

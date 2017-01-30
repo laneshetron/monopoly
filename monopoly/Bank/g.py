@@ -1,10 +1,11 @@
 import os
+import random
 import time
 import json
 import sqlite3
 import socket
 from collections import deque
-from multiprocessing import Value
+from multiprocessing import Value, Array
 
 class ratelimit:
     # This seems simple, but is very important!
@@ -95,6 +96,28 @@ class Uptime:
     @property
     def elapsedDisconnect(self):
         return int(time.time()) - self.lastDisconnect
+
+class KarmaLottery:
+    def __init__(self, a, b, balls, pot=0):
+        self.a = Value('i', a)
+        self.b = Value('i', b)
+        self.balls = Value('i', balls)
+        self.pot = Value('i', pot)
+        self.start()
+
+    def start(self):
+        self._numbers = self.lottery()
+
+    # Secure number generation between a given range
+    def lottery(self):
+        return Array('i', [random.SystemRandom().randint(self.a, self.b) for i in range(self.balls)])
+
+    def is_valid(self, guess):
+        return guess in range(self.a.value, self.b.value + 1)
+
+    @property
+    def numbers(self):
+        return list(self._numbers)
 
 _g_root = os.path.dirname(os.path.realpath(__file__))
 
