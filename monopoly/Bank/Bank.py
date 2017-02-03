@@ -220,8 +220,10 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     cursor = g.cursor
     db = g.db
 
-    increments = re.findall("(?:^|:|\s)([a-zA-Z_]+)\+\+( [0-9]+)?", privmsg) + re.findall("\(([a-zA-Z ]+)\)\+\+( [0-9]+)?", privmsg) # parens
-    decrements = re.findall("(?:^|:|\s)([a-zA-Z_]+)--( [0-9]+)?(?!\S)", privmsg) + re.findall("\(([a-zA-Z ]+)\)--( [0-9]+)?", privmsg) # parens
+    increments = re.findall("(?:^|:|\s)@?([a-zA-Z_]+)\+\+( [0-9]+)?", privmsg) +
+                 re.findall("\(([a-zA-Z ]+)\)\+\+( [0-9]+)?", privmsg) # parens
+    decrements = re.findall("(?:^|:|\s)@?([a-zA-Z_]+)--( [0-9]+)?(?!\S)", privmsg) +
+                 re.findall("\(([a-zA-Z ]+)\)--( [0-9]+)?", privmsg) # parens
 
     for group in increments:
         _nick = group[0].replace("_", " ")

@@ -149,8 +149,10 @@ class Base:
         self.message(quote)
 
     def receive(self, msg, sender, clients):
-        increments = re.findall("(?:^|\s)([a-zA-Z_]+)\+\+( [0-9]+)?", msg) + re.findall("\(([a-zA-Z ]+)\)\+\+( [0-9]+)?", msg) # parens
-        decrements = re.findall("(?:^|\s)([a-zA-Z_]+)--( [0-9]+)?(?!\S)", msg) + re.findall("\(([a-zA-Z ]+)\)--( [0-9]+)?", msg) # parens
+        increments = re.findall("(?:^|\s)@?([a-zA-Z_]+)\+\+( [0-9]+)?", msg) +
+                     re.findall("\(([a-zA-Z ]+)\)\+\+( [0-9]+)?", msg) # parens
+        decrements = re.findall("(?:^|\s)@?([a-zA-Z_]+)--( [0-9]+)?(?!\S)", msg) +
+                     re.findall("\(([a-zA-Z ]+)\)--( [0-9]+)?", msg) # parens
 
         for group in increments:
             _nick = group[0].replace("_", " ")
