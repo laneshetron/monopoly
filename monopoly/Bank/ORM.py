@@ -114,7 +114,8 @@ class Analytics:
         data = self.cursor.fetchall()
         results = []
         for row in data:
-            results.append([row[1], round(row[4])])
+            if round(row[4]) > 0:
+                results.append([row[1], round(row[4])])
         return results
 
     @property
