@@ -64,7 +64,6 @@ target/
 
 #production stuff
 tmp/
-hangups/
 archive/
 *.db
 *.sh

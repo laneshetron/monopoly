@@ -73,7 +73,7 @@ def connect():
 
 def main(uptime, queues, **kwargs):
     g.uptime = uptime
-    swift = queues['hangouts']
+    swift = queues['hangouts'] if 'hangouts' in queues else None
     donald = Trumpisms()
 
     connect()
