@@ -58,7 +58,7 @@ class Bank(Base):
         re_mentions = re.compile("<@([0-9a-zA-Z]+)\|?(?:[0-9a-zA-Z]+)?>")
         for mention in re.findall(re_mentions, text):
             name = self.id_to_name(mention)
-            text = re.sub(re_mentions, name, text)
+            text = re.sub("<@{0}\|?(?:[0-9a-zA-Z]+)?>".format(mention), name, text)
 
         # Replace — (emdash) with --
         text = re.sub("—", "--", text)
