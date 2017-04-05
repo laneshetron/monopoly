@@ -40,7 +40,10 @@ class SlackClient:
                 self.bank.set_user(message['user'])
             elif message['type'] in ['bot_added', 'bot_changed']:
                 self.bank.set_user(message['bot'])
-            elif message['type'] == 'message' and 'reply_to' not in message:
+            elif (message['type'] == 'message'
+                and 'reply_to' not in message
+                and ('subtype' not in message
+                    or message['subtype'] not in ['message_changed', 'message_deleted'])):
                 # Consume message
                 print(message['text'])
                 buffer = self.bank.receive(message)
