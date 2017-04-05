@@ -10,6 +10,9 @@ class Bank(Base):
         if 'users' in team:
             for user in team['users']:
                 self.users[user['id']] = user
+        if 'bots' in team:
+            for bot in team['bots']:
+                self.users[bot['id']] = bot
         if 'channels' in team:
             for channel in team['channels']:
                 self.channels[channel['id']] = channel

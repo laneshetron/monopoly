@@ -36,8 +36,10 @@ class SlackClient:
                 print('Error encountered: {1}'.format(message['error']))
             elif message['type'] in ['channel_joined', 'group_joined', 'im_created']:
                 self.bank.set_channel(message['channel'])
-            elif message['type'] in ['user_change', 'team_join']:
+            elif message['type'] in ['team_join', 'user_change']:
                 self.bank.set_user(message['user'])
+            elif message['type'] in ['bot_added', 'bot_changed']:
+                self.bank.set_user(message['bot'])
             elif message['type'] == 'message' and 'reply_to' not in message:
                 # Consume message
                 print(message['text'])
