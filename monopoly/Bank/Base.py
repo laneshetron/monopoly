@@ -159,8 +159,9 @@ class Base:
 
         for key, value in increments.items():
             for group in value:
+                _nick = group[0]
                 if key == 'basic':
-                    _nick = group[0].replace("_", " ")
+                    _nick = _nick.replace("_", " ")
                 _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
                 if len(group[1]) > 0:
                     delta = abs(int(group[1]))
@@ -184,8 +185,9 @@ class Base:
 
         for key, value in decrements.items():
             for group in value:
+                _nick = group[0]
                 if key == 'basic':
-                    _nick = group[0].replace("_", " ")
+                    _nick = _nick.replace("_", " ")
                 _nick = ' '.join(_nick.split())
                 if len(group[1]) > 0:
                     delta = abs(int(group[1])) * -1
