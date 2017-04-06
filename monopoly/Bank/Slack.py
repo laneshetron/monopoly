@@ -77,6 +77,9 @@ class Bank(Base):
         # Replace — (emdash) with --
         text = re.sub("—", "--", text)
 
+        # Replace &amp; with &
+        text = re.sub("&amp;", "&", text)
+
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
         return super().receive(text, sender, clients)
