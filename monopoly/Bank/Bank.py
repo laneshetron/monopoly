@@ -220,13 +220,17 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     cursor = g.cursor
     db = g.db
 
-    increments = (re.findall("(?:^|:|\s)@?([a-zA-Z_]+)\+\+( [0-9]+)?", privmsg) +
-                  re.findall("\(([a-zA-Z ]+)\)\+\+( [0-9]+)?", privmsg)) # parens
-    decrements = (re.findall("(?:^|:|\s)@?([a-zA-Z_]+)--( [0-9]+)?(?!\S)", privmsg) +
-                  re.findall("\(([a-zA-Z ]+)\)--( [0-9]+)?", privmsg)) # parens
+    basic = "(?:^|\s)@?(#?~*[\w$]+[?~]*%?){0}( [0-9]+)?(?!\S)"
+    parens = "\(([\w#&%?~\-/ ]+)\){0}( [0-9]+)?(?!\S)"
 
-    for group in increments:
-        _nick = group[0].replace("_", " ")
+    increments = {'basic':  re.findall(basic.format("\+\+"), privmsg),
+                  'parens': re.findall(parens.format("\+\+"), privmsg)}
+    decrements = {'basic':  re.findall(basic.format("--"), privmsg),
+                  'parens': re.findall(parens.format("--"), privmsg)}
+
+    for key, group in increments.iteritems():
+        if key == 'basic':
+            _nick = group[0].replace("_", " ")
         _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
         if len(group[1]) > 0:
             delta = abs(int(group[1]))
@@ -260,8 +264,9 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
                     or sr_ratelimiter.dropped(s_user + s_user) == 1):
                     message("http://i.imgur.com/v79Hl19.jpg", channel)
 
-    for group in decrements:
-        _nick = group[0].replace("_", " ")
+    for key, group in decrements.iteritems():
+        if key == 'basic':
+            _nick = group[0].replace("_", " ")
         _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
         if len(group[1]) > 0:
             delta = abs(int(group[1])) * -1
