@@ -33,6 +33,11 @@ class Bank(Base):
     def set_user(self, user):
         self.users[user['id']] = user
 
+    def channel_to_name(self, id):
+        if id in self.channels:
+            return self.channels[id]['name']
+        return id
+
     def id_to_name(self, id):
         if id in self.users:
             return self.users[id]['name']

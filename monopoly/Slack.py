@@ -45,7 +45,8 @@ class SlackClient:
                 and ('subtype' not in message
                     or message['subtype'] not in ['message_changed', 'message_deleted'])):
                 # Consume message
-                print(message['text'])
+                print("{0}: {1}\n{2}".format(self.bank.channel_to_name(message['channel']),
+                                             message['text'], self.bank.id_to_name(message['user'])))
                 buffer = self.bank.receive(message)
                 for msg in buffer:
                     self.send(msg[0], message['channel'])
