@@ -35,7 +35,10 @@ class Bank(Base):
 
     def channel_to_name(self, id):
         if id in self.channels:
-            return self.channels[id]['name']
+            try:
+                return self.channels[id]['name']
+            except:
+                return self.id_to_name(id)
         return id
 
     def id_to_name(self, id):
