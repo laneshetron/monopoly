@@ -228,76 +228,78 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     decrements = {'basic':  re.findall(basic.format("--"), privmsg),
                   'parens': re.findall(parens.format("--"), privmsg)}
 
-    for key, group in increments.items():
-        if key == 'basic':
-            _nick = group[0].replace("_", " ")
-        _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
-        if len(group[1]) > 0:
-            delta = abs(int(group[1]))
-        else:
-            delta = None
+    for key, value in increments.items():
+        for group in value:
+            if key == 'basic':
+                _nick = group[0].replace("_", " ")
+            _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
+            if len(group[1]) > 0:
+                delta = abs(int(group[1]))
+            else:
+                delta = None
 
-        if delta is not None and s_user in whitelist:
-            modify(delta, 'monopoly', _nick)
-        else:
-            if _nick.lower() != s_user:
-                if not private and _nick not in fixed:
-                    if (g_ratelimiter.queue(s_user)
-                        and r_ratelimiter.queue(_nick)
-                        and sr_ratelimiter.queue(s_user + _nick)):
+            if delta is not None and s_user in whitelist:
+                modify(delta, 'monopoly', _nick)
+            else:
+                if _nick.lower() != s_user:
+                    if not private and _nick not in fixed:
+                        if (g_ratelimiter.queue(s_user)
+                            and r_ratelimiter.queue(_nick)
+                            and sr_ratelimiter.queue(s_user + _nick)):
+                            modify(1, s_user, _nick)
+                        elif (g_ratelimiter.dropped(s_user) == 1
+                            or r_ratelimiter.dropped(_nick) == 1
+                            or sr_ratelimiter.dropped(s_user + _nick) == 1):
+                            message("http://i.imgur.com/v79Hl19.jpg", channel)
+                    elif private and s_user in whitelist:
                         modify(1, s_user, _nick)
-                    elif (g_ratelimiter.dropped(s_user) == 1
-                        or r_ratelimiter.dropped(_nick) == 1
-                        or sr_ratelimiter.dropped(s_user + _nick) == 1):
-                        message("http://i.imgur.com/v79Hl19.jpg", channel)
-                elif private and s_user in whitelist:
-                    modify(1, s_user, _nick)
-                elif private:
-                    message("You are not on the whitelist for private messages.", channel)
-            else:
-                if (g_ratelimiter.queue(s_user)
-                    and r_ratelimiter.queue(s_user)
-                    and sr_ratelimiter.queue(s_user + s_user)):
-                    punish(s_user)
-                elif (g_ratelimiter.dropped(s_user) == 1
-                    or r_ratelimiter.dropped(s_user) == 1
-                    or sr_ratelimiter.dropped(s_user + s_user) == 1):
-                    message("http://i.imgur.com/v79Hl19.jpg", channel)
-
-    for key, group in decrements.items():
-        if key == 'basic':
-            _nick = group[0].replace("_", " ")
-        _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
-        if len(group[1]) > 0:
-            delta = abs(int(group[1])) * -1
-        else:
-            delta = None
-
-        if delta is not None and s_user in whitelist:
-            modify(delta, 'monopoly', _nick)
-        else:
-            if s_user in blacklist:
-                if (g_ratelimiter.queue(s_user)
-                    and sr_ratelimiter.queue(s_user + s_user)):
-                    modify(-1, 'monopoly', s_user)
-                    message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
-                elif (g_ratelimiter.dropped(s_user) == 1
-                    or sr_ratelimiter.dropped(s_user + s_user) == 1):
-                    message("http://i.imgur.com/v79Hl19.jpg", channel)
-            else:
-                if not private and _nick not in fixed:
+                    elif private:
+                        message("You are not on the whitelist for private messages.", channel)
+                else:
                     if (g_ratelimiter.queue(s_user)
-                        and r_ratelimiter.queue(_nick)
-                        and sr_ratelimiter.queue(s_user + _nick)):
-                        modify(-1, s_user, _nick)
+                        and r_ratelimiter.queue(s_user)
+                        and sr_ratelimiter.queue(s_user + s_user)):
+                        punish(s_user)
                     elif (g_ratelimiter.dropped(s_user) == 1
-                        or r_ratelimiter.dropped(_nick) == 1
-                        or sr_ratelimiter.dropped(s_user + _nick) == 1):
+                        or r_ratelimiter.dropped(s_user) == 1
+                        or sr_ratelimiter.dropped(s_user + s_user) == 1):
                         message("http://i.imgur.com/v79Hl19.jpg", channel)
-                elif private and s_user in whitelist:
-                    modify(-1, s_user, _nick)
-                elif private:
-                    message("You are not on the whitelist for private messages.", channel)
+
+    for key, value in decrements.items():
+        for group in value:
+            if key == 'basic':
+                _nick = group[0].replace("_", " ")
+            _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
+            if len(group[1]) > 0:
+                delta = abs(int(group[1])) * -1
+            else:
+                delta = None
+
+            if delta is not None and s_user in whitelist:
+                modify(delta, 'monopoly', _nick)
+            else:
+                if s_user in blacklist:
+                    if (g_ratelimiter.queue(s_user)
+                        and sr_ratelimiter.queue(s_user + s_user)):
+                        modify(-1, 'monopoly', s_user)
+                        message("You've lost your downvoting privileges, {0}.".format(s_user), channel)
+                    elif (g_ratelimiter.dropped(s_user) == 1
+                        or sr_ratelimiter.dropped(s_user + s_user) == 1):
+                        message("http://i.imgur.com/v79Hl19.jpg", channel)
+                else:
+                    if not private and _nick not in fixed:
+                        if (g_ratelimiter.queue(s_user)
+                            and r_ratelimiter.queue(_nick)
+                            and sr_ratelimiter.queue(s_user + _nick)):
+                            modify(-1, s_user, _nick)
+                        elif (g_ratelimiter.dropped(s_user) == 1
+                            or r_ratelimiter.dropped(_nick) == 1
+                            or sr_ratelimiter.dropped(s_user + _nick) == 1):
+                            message("http://i.imgur.com/v79Hl19.jpg", channel)
+                    elif private and s_user in whitelist:
+                        modify(-1, s_user, _nick)
+                    elif private:
+                        message("You are not on the whitelist for private messages.", channel)
     modify_messages(channel)
 
     if re.search("!uptime", privmsg, re.IGNORECASE):

@@ -157,56 +157,58 @@ class Base:
         decrements = {'basic':  re.findall(basic.format("--"), msg),
                       'parens': re.findall(parens.format("--"), msg)}
 
-        for key, group in increments.items():
-            if key == 'basic':
-                _nick = group[0].replace("_", " ")
-            _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
-            if len(group[1]) > 0:
-                delta = abs(int(group[1]))
-            else:
-                delta = None
-
-            if delta is not None and sender in whitelist:
-                self.modify(delta, _nick, 'monopoly')
-            else:
-                if _nick.lower() != sender:
-                    if sender not in blacklist and _nick not in fixed:
-                        if len(clients) > 2 or sender in whitelist:
-                            if (self.g_ratelimiter.queue(sender)
-                                and self.r_ratelimiter.queue(_nick)
-                                and self.sr_ratelimiter.queue(sender + _nick)):
-                                self.modify(1, _nick, sender)
-                        else:
-                            self.message("You are not on the whitelist for private messages.")
+        for key, value in increments.items():
+            for group in value:
+                if key == 'basic':
+                    _nick = group[0].replace("_", " ")
+                _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
+                if len(group[1]) > 0:
+                    delta = abs(int(group[1]))
                 else:
-                    self.punish(sender)
+                    delta = None
 
-        for key, group in decrements.items():
-            if key == 'basic':
-                _nick = group[0].replace("_", " ")
-            _nick = ' '.join(_nick.split())
-            if len(group[1]) > 0:
-                delta = abs(int(group[1])) * -1
-            else:
-                delta = None
-
-            if delta is not None and sender in whitelist:
-                self.modify(delta, _nick, 'monopoly')
-            else:
-                if len(clients) > 2 or sender in whitelist:
-                    if (self.g_ratelimiter.queue(sender)
-                        and self.r_ratelimiter.queue(_nick)
-                        and self.sr_ratelimiter.queue(sender + _nick)):
-                        if sender in blacklist:
-                            self.modify(-1, sender, 'monopoly')
-                            self.message("You've lost your downvoting privileges, {0}."
-                                .format(sender))
-                        elif _nick in fixed:
-                            pass
-                        else:
-                            self.modify(-1, _nick, sender)
+                if delta is not None and sender in whitelist:
+                    self.modify(delta, _nick, 'monopoly')
                 else:
-                    self.message("You are not on the whitelist for private messages.")
+                    if _nick.lower() != sender:
+                        if sender not in blacklist and _nick not in fixed:
+                            if len(clients) > 2 or sender in whitelist:
+                                if (self.g_ratelimiter.queue(sender)
+                                    and self.r_ratelimiter.queue(_nick)
+                                    and self.sr_ratelimiter.queue(sender + _nick)):
+                                    self.modify(1, _nick, sender)
+                            else:
+                                self.message("You are not on the whitelist for private messages.")
+                    else:
+                        self.punish(sender)
+
+        for key, value in decrements.items():
+            for group in value:
+                if key == 'basic':
+                    _nick = group[0].replace("_", " ")
+                _nick = ' '.join(_nick.split())
+                if len(group[1]) > 0:
+                    delta = abs(int(group[1])) * -1
+                else:
+                    delta = None
+
+                if delta is not None and sender in whitelist:
+                    self.modify(delta, _nick, 'monopoly')
+                else:
+                    if len(clients) > 2 or sender in whitelist:
+                        if (self.g_ratelimiter.queue(sender)
+                            and self.r_ratelimiter.queue(_nick)
+                            and self.sr_ratelimiter.queue(sender + _nick)):
+                            if sender in blacklist:
+                                self.modify(-1, sender, 'monopoly')
+                                self.message("You've lost your downvoting privileges, {0}."
+                                    .format(sender))
+                            elif _nick in fixed:
+                                pass
+                            else:
+                                self.modify(-1, _nick, sender)
+                    else:
+                        self.message("You are not on the whitelist for private messages.")
 
         # TODO need shared health monitoring between hangouts and IRC
         if re.search("!uptime", msg, re.IGNORECASE):
