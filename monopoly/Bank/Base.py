@@ -157,7 +157,7 @@ class Base:
         decrements = {'basic':  re.findall(basic.format("--"), msg),
                       'parens': re.findall(parens.format("--"), msg)}
 
-        for key, group in increments.iteritems():
+        for key, group in increments.items():
             if key == 'basic':
                 _nick = group[0].replace("_", " ")
             _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
@@ -181,7 +181,7 @@ class Base:
                 else:
                     self.punish(sender)
 
-        for key, group in decrements.iteritems():
+        for key, group in decrements.items():
             if key == 'basic':
                 _nick = group[0].replace("_", " ")
             _nick = ' '.join(_nick.split())

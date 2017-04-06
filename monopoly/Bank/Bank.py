@@ -228,7 +228,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
     decrements = {'basic':  re.findall(basic.format("--"), privmsg),
                   'parens': re.findall(parens.format("--"), privmsg)}
 
-    for key, group in increments.iteritems():
+    for key, group in increments.items():
         if key == 'basic':
             _nick = group[0].replace("_", " ")
         _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
@@ -264,7 +264,7 @@ def operands(msg, privmsg, chnl, clients, sender, trumpisms):
                     or sr_ratelimiter.dropped(s_user + s_user) == 1):
                     message("http://i.imgur.com/v79Hl19.jpg", channel)
 
-    for key, group in decrements.iteritems():
+    for key, group in decrements.items():
         if key == 'basic':
             _nick = group[0].replace("_", " ")
         _nick = ' '.join(_nick.split()) # Reduces whitespaces and strips trailing
