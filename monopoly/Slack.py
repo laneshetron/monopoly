@@ -18,9 +18,11 @@ class SlackClient:
         self.ws = None
         self.bank = None
 
-    def send(self, text, channel):
+    def send(self, text, channel, opts=None):
         if self.ws:
-            message = json.dumps({'id': 1, 'type': 'message', 'channel': channel, 'text': text})
+            base = {'id': 1, 'type': 'message', 'channel': channel, 'text': text}
+            message = {**base, **opts} if opts else base
+            message = json.dumps(message)
             self.ws.send(message)
         else:
             raise Exception('No websocket available.')
@@ -47,9 +49,9 @@ class SlackClient:
                 # Consume message
                 print("{0}: {1}\n{2}".format(self.bank.channel_to_name(message['channel']),
                                              message['text'], self.bank.id_to_name(message['user'])))
-                buffer = self.bank.receive(message)
+                buffer, options = self.bank.receive(message)
                 for msg in buffer:
-                    self.send(msg[0], message['channel'])
+                    self.send(msg['text'], message['channel'], options)
 
     def on_error(self, ws, error):
         print(error)

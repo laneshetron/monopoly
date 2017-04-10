@@ -58,6 +58,7 @@ class Bank(Base):
         return []
 
     def receive(self, message):
+        options = {}
         # Handle members joining & leaving
         if 'subtype' in message:
             if (message['subtype'] in ['channel_join', 'group_join'] and
@@ -82,4 +83,11 @@ class Bank(Base):
 
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
-        return super().receive(text, sender, clients)
+        messages = super().receive(text, sender, clients)
+        for x in messages:
+            if x['type'] == 'karma':
+                options['thread_ts'] = message['ts']
+        if 'thread_ts' in message:
+            options['thread_ts'] = message['thread_ts']
+
+        return messages, options

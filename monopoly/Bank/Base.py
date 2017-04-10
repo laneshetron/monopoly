@@ -33,8 +33,8 @@ class Base:
         self.sr_ratelimiter = g.ratelimiter(max=6)
         self.k_ratelimiter = g.ratelimiter(1, 300000)
 
-    def message(self, msg, fname=None):
-        self.messageBuffer.append([msg, fname])
+    def message(self, msg, msg_type='message', fname=None):
+        self.messageBuffer.append({'text': msg, 'fname': fname, 'type': msg_type})
 
     def modify(self, amount, nick, sender):
         if nick in self.modifications:
@@ -55,12 +55,12 @@ class Base:
             for nick, (change, total) in results.items():
                 if change > 0:
                     change = " {0} ".format(change) if change > 1 else " "
-                    self.message("Gave{0}karma to {1} ({2})".format(change, nick, total))
+                    self.message("Gave{0}karma to {1} ({2})".format(change, nick, total), 'karma')
                 elif change < 0:
                     change = " {0} ".format(abs(change)) if change < -1 else " "
-                    self.message("Took{0}karma from {1} ({2})".format(change, nick, total))
+                    self.message("Took{0}karma from {1} ({2})".format(change, nick, total), 'karma')
                 else:
-                    self.message("I award you no points, and may God have mercy on your soul. {0} ({1})".format(nick, total))
+                    self.message("I award you no points, and may God have mercy on your soul. {0} ({1})".format(nick, total), 'karma')
         else:
             keys = sorted(results, key=results.get)
             decrements = [x for x in sorted(results, key=results.get, reverse=True)
@@ -71,7 +71,7 @@ class Base:
                     change = results[increments[0]][0]
                     change = " {0} ".format(change) if change != 1 else " "
                     nicks = ["{0} ({1})".format(x, results[x][1]) for x in increments]
-                    self.message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)))
+                    self.message("Gave{0}karma to {1}".format(change, nl().nl_join(nicks)), 'karma')
                 else:
                     nicks = []
                     for x in increments:
@@ -84,14 +84,14 @@ class Base:
                         substr.append(x)
                         substr.append('({0})'.format(results[x][1]))
                         nicks.append(' '.join(substr))
-                    self.message("Gave {0}".format(nl().nl_join(nicks)))
+                    self.message("Gave {0}".format(nl().nl_join(nicks)), 'karma')
 
             if len(decrements) > 0:
                 if len(set([results[x][0] for x in decrements])) < 2:
                     change = results[decrements[0]][0]
                     change = " {0} ".format(abs(change)) if change != 1 else " "
                     nicks = ["{0} ({1})".format(x, results[x][1]) for x in decrements]
-                    self.message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)))
+                    self.message("Took{0}karma from {1}".format(change, nl().nl_join(nicks)), 'karma')
                 else:
                     nicks = []
                     for x in decrements:
@@ -104,7 +104,7 @@ class Base:
                         substr.append(x)
                         substr.append('({0})'.format(results[x][1]))
                         nicks.append(' '.join(substr))
-                    self.message("Took {0}".format(nl().nl_join(nicks)))
+                    self.message("Took {0}".format(nl().nl_join(nicks)), 'karma')
 
     def punish(self, nick):
         transaction = Transaction('monopoly', nick)

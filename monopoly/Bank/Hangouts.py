@@ -115,8 +115,8 @@ class Bank(Base):
 
     def send(self, buffer, conv):
         for msg in buffer:
-            segments = ChatMessageSegment.from_str(msg[0])
-            asyncio.async(conv.send_message(segments, image_file=msg[1]))
+            segments = ChatMessageSegment.from_str(msg['text'])
+            asyncio.async(conv.send_message(segments, image_file=msg['fname']))
 
     def subscribe(self, name, conv_id, private=False):
         try:
