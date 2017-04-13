@@ -30,8 +30,9 @@ class Bank(Base):
 
     def set_channel(self, channel):
         self.channels[channel['id']] = channel
-        db = Channel(channel['name'], channel['id']) # persist to db
-        db.set_name(channel['name'])
+        db = Channel(channel_id=channel['id']) # persist to db
+        if 'name' in channel:
+            db.set_name(channel['name'])
 
     def set_user(self, user):
         self.users[user['id']] = user
@@ -97,17 +98,14 @@ class Bank(Base):
         channel = Channel(self.channel_to_name(message['channel']), message['channel'])
         if re.search("!mute", text, re.IGNORECASE):
             channel.mute()
-            messages.append({'text': '~ mute ~', 'fname': None, 'type': 'broadcast'})
-            options['subtype'] = 'me_message'
+            messages.append({'text': '_~ mute ~_', 'fname': None, 'type': 'broadcast'})
         elif re.search("!softmute", text, re.IGNORECASE):
             channel.softmute()
-            messages.append({'text': '~ soft mute ~ karma change messages will be suppressed',
+            messages.append({'text': '_~ soft mute ~ karma change messages will be suppressed_',
                              'fname': None, 'type': 'broadcast'})
-            options['subtype'] = 'me_message'
         elif re.search("!unmute", text, re.IGNORECASE):
             channel.unmute()
-            messages.append({'text': '~ unmute ~', 'fname': None, 'type': 'broadcast'})
-            options['subtype'] = 'me_message'
+            messages.append({'text': '_~ unmute ~_', 'fname': None, 'type': 'broadcast'})
 
         # Filter in muted channels
         filtered = []

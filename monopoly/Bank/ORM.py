@@ -43,12 +43,12 @@ class Nick:
         return self._karma
 
 class Channel:
-    def __init__(self, name, channel_id=None):
+    def __init__(self, name=None, channel_id=None):
         self.db = g.db
         self.cursor = g.cursor
-        self._name = name
+        self._name = name if name else ''
         self._channel_id = channel_id
-        self._id
+        self._id = None
         self._mute_level = 1
         self._lottery_updates = 0
         self._get()
