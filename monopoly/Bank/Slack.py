@@ -88,9 +88,6 @@ class Bank(Base):
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
         messages = super().receive(text, sender, clients)
-        for x in messages:
-            if x['type'] == 'karma':
-                options['thread_ts'] = message['ts']
         if 'thread_ts' in message:
             options['thread_ts'] = message['thread_ts']
 
