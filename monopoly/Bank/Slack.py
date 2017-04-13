@@ -1,4 +1,5 @@
 from Bank.Base import Base
+from Bank.ORM import Channel
 import re
 
 class Bank(Base):
@@ -9,19 +10,19 @@ class Bank(Base):
 
         if 'users' in team:
             for user in team['users']:
-                self.users[user['id']] = user
+                self.set_user(user)
         if 'bots' in team:
             for bot in team['bots']:
-                self.users[bot['id']] = bot
+                self.set_user(bot)
         if 'channels' in team:
             for channel in team['channels']:
-                self.channels[channel['id']] = channel
+                self.set_channel(channel)
         if 'groups' in team:
             for group in team['groups']:
-                self.channels[group['id']] = group
+                self.set_channel(group)
         if 'ims' in team:
             for im in team['ims']:
-                self.channels[im['id']] = im
+                self.set_channel(im)
         if 'self' in team:
             self.me = team['self']
 
@@ -29,6 +30,8 @@ class Bank(Base):
 
     def set_channel(self, channel):
         self.channels[channel['id']] = channel
+        db = Channel(channel['name'], channel['id']) # persist to db
+        db.set_name(channel['name'])
 
     def set_user(self, user):
         self.users[user['id']] = user
@@ -90,4 +93,30 @@ class Bank(Base):
         if 'thread_ts' in message:
             options['thread_ts'] = message['thread_ts']
 
-        return messages, options
+        # Some Slack-specific commands
+        channel = Channel(self.channel_to_name(message['channel']), message['channel'])
+        if re.search("!mute", text, re.IGNORECASE):
+            channel.mute()
+            messages.append({'text': '~ mute ~', 'fname': None, 'type': 'broadcast'})
+            options['subtype'] = 'me_message'
+        elif re.search("!softmute", text, re.IGNORECASE):
+            channel.softmute()
+            messages.append({'text': '~ soft mute ~ karma change messages will be suppressed',
+                             'fname': None, 'type': 'broadcast'})
+            options['subtype'] = 'me_message'
+        elif re.search("!unmute", text, re.IGNORECASE):
+            channel.unmute()
+            messages.append({'text': '~ unmute ~', 'fname': None, 'type': 'broadcast'})
+            options['subtype'] = 'me_message'
+
+        # Filter in muted channels
+        filtered = []
+        for x in messages:
+            if channel.mute_level < 1:
+                filtered.append(x)
+            elif channel.mute_level < 2 and x['type'] != 'karma':
+                filtered.append(x)
+            elif channel.mute_level == 2 and x['type'] == 'broadcast':
+                filtered.append(x)
+
+        return filtered, options

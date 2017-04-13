@@ -22,6 +22,12 @@ def load_schema(db, cursor):
                     conv_id TEXT);
 
     CREATE TABLE IF NOT EXISTS
+        channels(channel_id TEXT UNIQUE,
+                 name TEXT,
+                 mute_level INTEGER DEFAULT 1,
+                 lottery_updates INTEGER DEFAULT 0);
+
+    CREATE TABLE IF NOT EXISTS
         trumpisms(id INTEGER PRIMARY KEY AUTOINCREMENT,
                   quote TEXT);
 

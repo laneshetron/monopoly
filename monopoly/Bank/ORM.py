@@ -42,6 +42,77 @@ class Nick:
     def karma(self):
         return self._karma
 
+class Channel:
+    def __init__(self, name, channel_id=None):
+        self.db = g.db
+        self.cursor = g.cursor
+        self._name = name
+        self._channel_id = channel_id
+        self._id
+        self._mute_level = 1
+        self._lottery_updates = 0
+        self._get()
+
+    def _get(self):
+        if self.channel_id:
+            self.cursor.execute(
+                "SELECT * FROM channels WHERE channel_id = ? COLLATE NOCASE LIMIT 1",
+                (self.channel_id,))
+        else:
+            self.cursor.execute("SELECT * FROM channels WHERE name = ? COLLATE NOCASE LIMIT 1",
+                (self.name,))
+        data = self.cursor.fetchone()
+
+        if data is not None:
+            self._id, self._channel_id, self._name, self._mute_level, self._lottery_updates = data
+        else:
+            if self.channel_id:
+                self.cursor.execute("INSERT INTO channels(name, channel_id) VALUES (?, ?)",
+                    (self.name, self.channel_id))
+            else:
+                self.cursor.execute("INSERT INTO channels(name) VALUES (?)", (self.name,))
+            self.db.commit()
+            self._id = self.cursor.lastrowid
+
+    def set_name(self, name):
+        self.cursor.execute("UPDATE channels SET name = ? WHERE id = ?", (name, self.id))
+        self.db.commit()
+        self._name = name
+
+    def set_mute(self, level):
+        self.cursor.execute("UPDATE channels SET mute_level = ? WHERE id = ?", (level, self.id))
+        self.db.commit()
+        self._mute_level = level
+
+    def mute(self):
+        self.set_mute(2)
+
+    def softmute(self):
+        self.set_mute(1)
+
+    def unmute(self):
+        self.set_mute(0)
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def channel_id(self):
+        return self._channel_id
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def mute_level(self):
+        return self._mute_level
+
+    @property
+    def lottery_updates(self):
+        return self._lottery_updates
+
 class Transaction:
     def __init__(self, sender, receiver):
         self.db = g.db
