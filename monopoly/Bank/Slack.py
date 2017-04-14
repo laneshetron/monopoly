@@ -61,6 +61,44 @@ class Bank(Base):
                 return [self.id_to_name(self.channels[id]['user'])]
         return []
 
+    def attach_karma_global(self, text):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
+                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        attachment = { 'fallback': text,
+                       'color': '#0f9d58',
+                       'title': 'Global Monopoly Karma Totals',
+                       'text': italicized,
+                       'mrkdwn_in': ['text'],
+                       'footer': 'Only top 10 results shown' }
+        return attachment
+
+    def attach_karma_totals(self, text, channel_name):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
+                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        attachment = { 'fallback': text,
+                       'color': '#0f9d58',
+                       'title': 'Monopoly Karma Totals for #{0}'.format(channel_name),
+                       'text': italicized,
+                       'mrkdwn_in': ['text'],
+                       'footer': 'Only top 10 results shown' }
+        return attachment
+
+    def attach_karma_total(self, text):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
+                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        attachment = { 'fallback': text,
+                       'color': '#0f9d58',
+                       'title': 'Monopoly Karma Total',
+                       'text': italicized,
+                       'mrkdwn_in': ['text'] }
+        return attachment
+
+    def attach_ratelimit(self):
+        attachment = { 'fallback': 'ENOUGH!',
+                       'title': 'Ratelimit exceeded',
+                       'image_url': 'http://i.imgur.com/v79Hl19.jpg' }
+        return attachment
+
     def receive(self, message):
         options = {}
         # Handle members joining & leaving
@@ -104,9 +142,22 @@ class Bank(Base):
             channel.unmute()
             messages.append({'text': '_~ unmute ~_', 'fname': None, 'type': 'broadcast'})
 
-        # Filter in muted channels
         filtered = []
         for x in messages:
+            if x['type'] == 'karma_global':
+                options['attachments'] = [self.attach_karma_global(x['text'])]
+                x['text'] = ''
+            if x['type'] == 'karma_totals':
+                options['attachments'] = [self.attach_karma_totals(x['text'], channel.name)]
+                x['text'] = ''
+            if x['type'] == 'karma_total':
+                options['attachments'] = [self.attach_karma_total(x['text'])]
+                x['text'] = ''
+            if x['type'] == 'ratelimit':
+                options['attachments'] = [self.attach_ratelimit(x['text'])]
+                x['text'] = ''
+
+            # Filter in muted channels
             if channel.mute_level < 1:
                 filtered.append(x)
             elif channel.mute_level < 2 and x['type'] != 'karma':

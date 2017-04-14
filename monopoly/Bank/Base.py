@@ -33,6 +33,15 @@ class Base:
         self.sr_ratelimiter = g.ratelimiter(max=6)
         self.k_ratelimiter = g.ratelimiter(1, 300000)
 
+    # TODO convert ratelimiting into meta decorators
+    def g_ratelimit_command(self, sender, private, command, *args):
+        if ((private and self.g_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender))
+            or (not private and self.g_ratelimiter.queue(sender))):
+            command(*args)
+        elif ((private and self.g_ratelimiter.dropped('global') == 1)
+            or self.g_ratelimiter.dropped(sender) == 1):
+            self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
+
     def message(self, msg, msg_type='message', fname=None):
         self.messageBuffer.append({'text': msg, 'fname': fname, 'type': msg_type})
 
@@ -115,17 +124,17 @@ class Base:
     def karma(self, clients, nick=None, all=False):
         clients = list(set(clients))
         msg = limit = ""
+        msg_type = 'karma_totals'
         print(clients)
         if nick is not None:
             limit = "WHERE nick = '%s' COLLATE NOCASE LIMIT 1" % nick
-            self.message("Monopoly karma total for {0}:".format(nick))
+            msg_type = 'karma_total'
         elif all:
             # do not set WHERE statement
             limit = " ORDER BY karma DESC LIMIT 10"
-            self.message("Global Monopoly karma totals:")
+            msg_type = 'karma_global'
         else:
             if len(clients) > 0:
-                self.message("Monopoly karma totals for this channel:")
                 limit = "WHERE "
                 for uname in clients:
                     limit += "nick = '%s'" % uname
@@ -137,10 +146,10 @@ class Base:
         self.cursor.execute("SELECT * FROM monopoly {0}".format(limit))
         data = self.cursor.fetchall()
         for row in data:
-            msg += "{0} {1}".format(row[1], row[2])
+            msg += "{0} ({1})".format(row[1], row[2])
             if row != data[-1]:
-                msg += "\n"
-        self.message(msg)
+                msg += "   "
+        self.message(msg, msg_type)
 
     def jakeism(self):
         if not self.rand_jakeisms:
@@ -149,6 +158,7 @@ class Base:
         self.message(quote)
 
     def receive(self, msg, sender, clients):
+        private = len(clients) < 3
         basic = "(?:^|\s)@?(#?~*[\w$]+[?~]*%?){0}( [0-9]+)?(?!\S)"
         parens = "\(([\w#&%?~\-/ ]+)\){0}( [0-9]+)?(?!\S)"
 
@@ -173,11 +183,13 @@ class Base:
                 else:
                     if _nick.lower() != sender:
                         if sender not in blacklist and _nick not in fixed:
-                            if len(clients) > 2 or sender in whitelist:
+                            if not private or sender in whitelist:
                                 if (self.g_ratelimiter.queue(sender)
                                     and self.r_ratelimiter.queue(_nick)
                                     and self.sr_ratelimiter.queue(sender + _nick)):
                                     self.modify(1, _nick, sender)
+                                else:
+                                    self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
                             else:
                                 self.message("You are not on the whitelist for private messages.")
                     else:
@@ -197,7 +209,7 @@ class Base:
                 if delta is not None and sender in whitelist:
                     self.modify(delta, _nick, 'monopoly')
                 else:
-                    if len(clients) > 2 or sender in whitelist:
+                    if not private or sender in whitelist:
                         if (self.g_ratelimiter.queue(sender)
                             and self.r_ratelimiter.queue(_nick)
                             and self.sr_ratelimiter.queue(sender + _nick)):
@@ -209,25 +221,24 @@ class Base:
                                 pass
                             else:
                                 self.modify(-1, _nick, sender)
+                        else:
+                            self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
                     else:
                         self.message("You are not on the whitelist for private messages.")
 
         # TODO need shared health monitoring between hangouts and IRC
         if re.search("!uptime", msg, re.IGNORECASE):
-            if self.g_ratelimiter.queue(sender):
-                self.message("Monopoly has been running for: {0}".format(
-                    str(timedelta(seconds=g.uptime.elapsed))))
+            self.g_ratelimit_command(sender, private, self.message,
+                "Monopoly has been running for: {0}".format(
+                str(timedelta(seconds=g.uptime.elapsed))))
 
         karma_parens = re.search("!karma \(([a-zA-Z ]+)\)", msg, re.IGNORECASE)
         karma_underscores = re.search("!karma( [a-zA-Z_]+)?(?!\S)", msg, re.IGNORECASE)
 
         if karma_parens:
-            if self.g_ratelimiter.queue(sender):
-                _nick = ' '.join(karma_parens.group(1).split())
-                if sender not in blacklist:
-                    self.karma(clients, _nick)
-                else:
-                    self.message("Nice try, {0}.".format(sender))
+            _nick = ' '.join(karma_parens.group(1).split())
+            if sender not in blacklist:
+                self.g_ratelimit_command(sender, private, self.karma, clients, _nick)
 
         elif karma_underscores and karma_underscores.group(1):
             if self.g_ratelimiter.queue(sender):
@@ -237,23 +248,20 @@ class Base:
                     if self.k_ratelimiter.queue('global'):
                         if sender not in blacklist:
                             self.karma(clients, all=True)
-                        else:
-                            self.message("Nice try, {0}.".format(sender))
                 else:
                     if sender not in blacklist:
                         self.karma(clients, _nick)
-                    else:
-                        self.message("Nice try, {0}.".format(sender))
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
         elif karma_underscores:
             if self.k_ratelimiter.queue('global') and self.g_ratelimiter.queue(sender):
                 if sender not in blacklist:
                     self.karma(clients)
-                else:
-                    self.message("Nice try, {0}.".format(sender))
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         if msg.find("jakeism") != -1:
-            if self.g_ratelimiter.queue(sender):
-                self.jakeism()
+            self.g_ratelimit_command(sender, private, self.jakeism)
 
         # Useful for counting arbitrary things of sudden importance
         # e.g. cups of coffee, number of times someone uses the word "synergy"
@@ -262,14 +270,20 @@ class Base:
             if self.g_ratelimiter.queue(sender) and g.ding > 0:
                 g.ding = 0
                 self.message("Reset to 0")
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         elif re.search("!ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
                 self.message("Total: <b>{0}</b>".format(g.ding))
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         elif re.search("ding", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
                 g.ding += 1
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         # Karma analytics
         if re.search("!givers", msg, re.IGNORECASE):
@@ -279,6 +293,8 @@ class Base:
                 for nick, ratio in analytics.top_givers:
                     message += "{0}: {1}% positive\n".format(nick, ratio)
                 self.message(message)
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         elif re.search("!takers", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
@@ -287,6 +303,8 @@ class Base:
                 for nick, ratio in analytics.top_takers:
                     message += "{0}: {1}% negative\n".format(nick, ratio)
                 self.message(message)
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         elif re.search("!loved", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
@@ -295,6 +313,8 @@ class Base:
                 for nick, ratio in analytics.top_loved:
                     message += "{0}: {1}% positive\n".format(nick, ratio)
                 self.message(message)
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         elif re.search("!hated", msg, re.IGNORECASE):
             if self.g_ratelimiter.queue(sender):
@@ -303,6 +323,8 @@ class Base:
                 for nick, ratio in analytics.top_hated:
                     message += "{0}: {1}% negative\n".format(nick, ratio)
                 self.message(message)
+            else:
+                self.message("", "ratelimit", "http://i.imgur.com/v79Hl19.jpg")
 
         return self.flush()
 
