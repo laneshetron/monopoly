@@ -62,8 +62,8 @@ class Bank(Base):
         return []
 
     def attach_karma_global(self, text):
-        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
-                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) (\([0-9]+\))",
+                            lambda x: '_' + x.group(1) + '_ ' + x.group(2), text, flags=re.IGNORECASE)
         attachment = { 'fallback': text,
                        'color': '#0f9d58',
                        'title': 'Global Monopoly Karma Totals',
@@ -73,8 +73,8 @@ class Bank(Base):
         return attachment
 
     def attach_karma_totals(self, text, channel_name):
-        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
-                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) (\([0-9]+\))",
+                            lambda x: '_' + x.group(1) + '_ ' + x.group(2), text, flags=re.IGNORECASE)
         attachment = { 'fallback': text,
                        'color': '#0f9d58',
                        'title': 'Monopoly Karma Totals for #{0}'.format(channel_name),
@@ -84,8 +84,8 @@ class Bank(Base):
         return attachment
 
     def attach_karma_total(self, text):
-        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) \([0-9]+\)",
-                            lambda x: '_' + x.group(0) + '_', text, flags=re.IGNORECASE):
+        italicized = re.sub("([\w#&%?~\-/]+(?: [\w#&%?~\-/]+)*) (\([0-9]+\))",
+                            lambda x: '_' + x.group(1) + '_ ' + x.group(2), text, flags=re.IGNORECASE)
         attachment = { 'fallback': text,
                        'color': '#0f9d58',
                        'title': 'Monopoly Karma Total',
