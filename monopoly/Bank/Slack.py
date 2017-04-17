@@ -1,5 +1,6 @@
 from Bank.Base import Base
 from Bank.ORM import Channel
+import json
 import re
 
 class Bank(Base):
@@ -145,16 +146,16 @@ class Bank(Base):
         filtered = []
         for x in messages:
             if x['type'] == 'karma_global':
-                options['attachments'] = [self.attach_karma_global(x['text'])]
+                options['attachments'] = json.dumps([self.attach_karma_global(x['text'])])
                 x['text'] = ''
             if x['type'] == 'karma_totals':
-                options['attachments'] = [self.attach_karma_totals(x['text'], channel.name)]
+                options['attachments'] = json.dumps([self.attach_karma_totals(x['text'], channel.name)])
                 x['text'] = ''
             if x['type'] == 'karma_total':
-                options['attachments'] = [self.attach_karma_total(x['text'])]
+                options['attachments'] = json.dumps([self.attach_karma_total(x['text'])])
                 x['text'] = ''
             if x['type'] == 'ratelimit':
-                options['attachments'] = [self.attach_ratelimit(x['text'])]
+                options['attachments'] = json.dumps([self.attach_ratelimit(x['text'])])
                 x['text'] = ''
 
             # Filter in muted channels

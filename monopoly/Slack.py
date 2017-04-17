@@ -12,7 +12,7 @@ def rtmStart(token):
     return requests.get('https://slack.com/api/rtm.start', params=params).json()
 
 def postMessage(token, channel, text=None, opts=None):
-    base = {'token': token, 'channel': channel}
+    base = {'token': token, 'channel': channel, 'as_user': True}
     params = {**base, **opts} if opts else base
     params['text'] = text if text else ''
     res = requests.get('https://slack.com/api/chat.postMessage', params=params).json()
