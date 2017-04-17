@@ -5,12 +5,18 @@ import requests
 import time
 import json
 
-domain = 'https://slack.com'
-endpoint = 'api/rtm.start'
-
 token = g.config['slack']['api-token']
 
-url = '{0}/{1}?token={2}&simple_latest=true&no_unreads=true'.format(domain, endpoint, token)
+def rtmStart(token):
+    params = {'token': token, 'simple_latest': True, 'no_unreads': True}
+    return requests.get('https://slack.com/api/rtm.start', params=params).json()
+
+def postMessage(token, channel, text=None, opts=None):
+    base = {'token': token, 'channel': channel}
+    params = {**base, **opts} if opts else base
+    params['text'] = text if text else ''
+    res = requests.get('https://slack.com/api/chat.postMessage', params=params).json()
+    return res['ok']
 
 class SlackClient:
     def __init__(self):
@@ -19,6 +25,10 @@ class SlackClient:
         self.bank = None
 
     def send(self, text, channel, opts=None):
+        if opts and 'attachments' in opts:
+            # Attachments can only be created through the Web API
+            return postMessage(token, channel, text, opts)
+
         if self.ws:
             base = {'id': 1, 'type': 'message', 'channel': channel, 'text': text}
             message = {**base, **opts} if opts else base
@@ -68,7 +78,7 @@ class SlackClient:
     def connect(self):
         while not self.up:
             try:
-                res = requests.get(url).json()
+                res = rtmStart(token)
                 if 'url' in res:
                     self.bank = Bank(res)
                     self.ws = websocket.WebSocketApp(res['url'], on_message=self.on_message,
