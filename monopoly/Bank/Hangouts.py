@@ -2,13 +2,9 @@ from Bank.Base import Base
 from Bank.Trumpisms import Trumpisms
 from hangups import (ChatMessageSegment, hangouts_pb2)
 import asyncio
+import os
 import random
 import re
-
-CONVERSATION_TYPE_ONE_TO_ONE = 1
-CONVERSATION_TYPE_GROUP = 2
-
-CONVERSATION_STATUS_ACTIVE = 2
 
 def parentheses(msg):
     sub = msg.find("(")
@@ -41,12 +37,15 @@ class Bank(Base):
             clients.append(nick)
         sender = name_to_nick(user.full_name)
 
-        imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.-]+)(\.jpg|\.png|\.jpeg|\.gif)\/?)", msg)
+        imageLinks = re.findall("((?:https?:\/\/)?(?:[\da-z\.-]+)\.(?:[a-z\.]"
+                                "{2,6})(?:[\/\w\.-]+)(\.jpg|\.png|\.jpeg|\.gif)\/?)", msg)
         for link in imageLinks:
-            if link[0].find("https://lh3.googleusercontent") == -1:
-                tmp_file = "/home/lshetron/.monopoly/tmp/" + str(random.randint(0,100)) + link[1]
+            if not re.search("https://lh3.googleusercontent", link[0], re.IGNORECASE):
+                tmp_file = os.path.join(os.getcwd(), "tmp",
+                                        str(random.randint(0,100)) + link[1])
                 try:
-                    with urllib.request.urlopen(link[0]) as response, open(tmp_file, "wb") as out:
+                    with urllib.request.urlopen(link[0]) as response,
+                         open(tmp_file, "w+b") as out:
                         data = response.read()
                         out.write(data)
                     self.message("", open(tmp_file, "rb"))
@@ -73,7 +72,7 @@ class Bank(Base):
                 inviteeID = hangouts_pb2.InviteeID(gaia_id=user.id_.gaia_id)
                 conversation_request = hangouts_pb2.CreateConversationRequest(
                     request_header = self.client.get_request_header(),
-                    type = CONVERSATION_TYPE_ONE_TO_ONE,
+                    type = hangouts_pb2.CONVERSATION_TYPE_ONE_TO_ONE,
                     client_generated_id = client_id,
                     invitee_id = [inviteeID])
                 res = yield from self.client.create_conversation(conversation_request)
@@ -120,7 +119,8 @@ class Bank(Base):
 
     def subscribe(self, name, conv_id, private=False):
         try:
-            self.cursor.execute("INSERT INTO subscribers(name, conv_id) VALUES(?, ?)", (name, conv_id))
+            self.cursor.execute("INSERT INTO subscribers(name, conv_id) VALUES(?, ?)",
+                                (name, conv_id))
             self.db.commit()
             self.swift.subscribers.append((name, conv_id))
             if not private:

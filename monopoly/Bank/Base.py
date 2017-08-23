@@ -123,32 +123,20 @@ class Base:
 
     def karma(self, clients, nick=None, all=False):
         clients = list(set(clients))
-        msg = limit = ""
         msg_type = 'karma_totals'
         print(clients)
         if nick is not None:
-            limit = "WHERE nick = '%s' COLLATE NOCASE LIMIT 1" % nick
+            self.cursor.execute("SELECT * FROM monopoly WHERE nick = ? COLLATE NOCASE LIMIT 1", (nick,))
             msg_type = 'karma_total'
         elif all:
-            # do not set WHERE statement
-            limit = " ORDER BY karma DESC LIMIT 10"
+            self.cursor.execute("SELECT * FROM monopoly ORDER BY karma DESC LIMIT 10")
             msg_type = 'karma_global'
         else:
-            if len(clients) > 0:
-                limit = "WHERE "
-                for uname in clients:
-                    limit += "nick = '%s'" % uname
-                    if uname != clients[-1]:
-                        limit += " OR "
-                limit += " COLLATE NOCASE"
-            limit += " ORDER BY karma DESC LIMIT 10"
-        print("SELECT * FROM monopoly {0}".format(limit))
-        self.cursor.execute("SELECT * FROM monopoly {0}".format(limit))
+            limit = "WHERE nick in ({0}) COLLATE NOCASE ".format(",".join('?'*len(clients))) \
+                if len(clients) else ""
+            self.cursor.execute("SELECT * FROM monopoly {0}ORDER BY karma DESC LIMIT 10".format(limit), clients)
         data = self.cursor.fetchall()
-        for row in data:
-            msg += "{0} ({1})".format(row[1], row[2])
-            if row != data[-1]:
-                msg += "   "
+        msg = "   ".join(["{0} ({1})".format(row[1], row[2]) for row in data])
         self.message(msg, msg_type)
 
     def jakeism(self):
