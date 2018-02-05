@@ -155,7 +155,7 @@ class Bank(Base):
                 options['attachments'] = json.dumps([self.attach_karma_total(x['text'])])
                 x['text'] = ''
             if x['type'] == 'ratelimit':
-                options['attachments'] = json.dumps([self.attach_ratelimit(x['text'])])
+                options['attachments'] = json.dumps([self.attach_ratelimit()])
                 x['text'] = ''
 
             # Filter in muted channels
