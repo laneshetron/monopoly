@@ -11,6 +11,10 @@ def rtmStart(token):
     params = {'token': token, 'simple_latest': True, 'no_unreads': True}
     return requests.get('https://slack.com/api/rtm.start', params=params).json()
 
+def conversationsMembers(token, channel, limit=300):
+    params = {'token': token, 'channel': channel, 'limit': limit}
+    return requests.get('https://slack.com/api/conversations.members', params=params).json()
+
 def postMessage(token, channel, text=None, opts=None):
     base = {'token': token, 'channel': channel, 'as_user': True}
     params = {**base, **opts} if opts else base
@@ -23,6 +27,15 @@ class SlackClient:
         self.up = False
         self.ws = None
         self.bank = None
+
+    def _update_members(self):
+        if self.bank is None:
+            return
+        for k, v in self.bank.channels.items():
+            if v.get('is_member', False):
+                res = conversationsMembers(token, k)
+                self.bank.channels[k]['members'] = list(
+                    set(v.get('members', [])) | set(res.get('members', [])))
 
     def send(self, text, channel, opts=None):
         if opts and 'attachments' in opts:
@@ -81,6 +94,7 @@ class SlackClient:
                 res = rtmStart(token)
                 if 'url' in res:
                     self.bank = Bank(res)
+                    self._update_members()
                     self.ws = websocket.WebSocketApp(res['url'], on_message=self.on_message,
                                                                  on_error=self.on_error,
                                                                  on_open=self.on_open,

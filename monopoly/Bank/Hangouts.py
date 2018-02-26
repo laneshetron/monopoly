@@ -44,10 +44,10 @@ class Bank(Base):
                 tmp_file = os.path.join(os.getcwd(), "tmp",
                                         str(random.randint(0,100)) + link[1])
                 try:
-                    with urllib.request.urlopen(link[0]) as response,
-                         open(tmp_file, "w+b") as out:
-                        data = response.read()
-                        out.write(data)
+                    with urllib.request.urlopen(link[0]) as response:
+                        with open(tmp_file, "w+b") as out:
+                            data = response.read()
+                            out.write(data)
                     self.message("", open(tmp_file, "rb"))
                 except urllib.error.URLError as e:
                     print("Error opening file: ", e)
