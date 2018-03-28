@@ -109,7 +109,7 @@ class Bank(Base):
             if self.g_ratelimiter.queue(sender):
                 self.message("<i>{0}</i>".format(self.donald.trumpism()))
 
-        buffer = super().receive(msg, sender, clients)
+        buffer = super().receive(msg, sender, clients, conv.name)
         self.send(buffer, conv)
 
     def send(self, buffer, conv):

@@ -116,7 +116,7 @@ class Bank(Base):
         re_mentions = re.compile("<@([0-9a-zA-Z]+)\|?(?:[0-9a-zA-Z]+)?>")
         for mention in re.findall(re_mentions, text):
             name = self.id_to_name(mention)
-            text = re.sub("<@{0}\|?(?:[0-9a-zA-Z]+)?>".format(mention), name, text)
+            text = re.sub("<@{0}\|?(?:[0-9a-zA-Z]+)?>( (?=\+))?".format(mention), name, text)
 
         # Replace — (emdash) with --
         text = re.sub("—", "--", text)
@@ -124,14 +124,14 @@ class Bank(Base):
         # Replace &amp; with &
         text = re.sub("&amp;", "&", text)
 
+        channel = Channel(self.channel_to_name(message['channel']), message['channel'])
         sender = self.id_to_name(message['user'])
         clients = self.members(message['channel'])
-        messages = super().receive(text, sender, clients)
+        messages = super().receive(text, sender, clients, channel.name)
         if 'thread_ts' in message:
             options['thread_ts'] = message['thread_ts']
 
         # Some Slack-specific commands
-        channel = Channel(self.channel_to_name(message['channel']), message['channel'])
         if re.search("!mute", text, re.IGNORECASE):
             channel.mute()
             messages.append({'text': '_~ mute ~_', 'fname': None, 'type': 'broadcast'})
